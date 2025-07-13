@@ -1,0 +1,170 @@
+# Changes Log
+
+## 2025-01-13 - Debug Badge & Pursue Career Button Fixes
+
+### Issue 1: Debug Badge Showing in Prod Version
+**Problem**: Debug badges and features were showing in production version when running from VS Code Android emulator.
+
+**Root Cause**: VS Code launch configuration was running `flutter run` (debug mode) instead of `flutter run --release` (release mode). The `kDebugMode` constant is `true` in debug builds regardless of flavor.
+
+**Solutions Implemented**:
+
+1. **Hidden Debug Banner** ✅
+   - Added `debugShowCheckedModeBanner: false` to `GetMaterialApp` in `career/lib/main_common.dart`
+   - Hides Flutter debug banner in all builds
+
+2. **Updated VS Code Launch Configuration** ✅
+   - Modified `.vscode/launch.json` "Android Emulator (Prod)" configuration
+   - Added `--release` flag to args: `["--flavor", "prod", "--release"]`
+   - Now runs prod version in release mode from VS Code
+
+3. **Enhanced Debug Control System** ✅
+   - Added `showDebugFeatures` property to `AppConfig` class in `career/lib/config/app_config.dart`
+   - Logic: `bool get showDebugFeatures => flavor == 'dev' || kDebugMode;`
+   - Updated debug feature checks in:
+     - `career/lib/features/home/screens/home_screen.dart` (admin button, debug navigation)
+     - `career/lib/features/assessment/screens/assessment_screen.dart` (debug assessment button)
+   - Added necessary imports for `AppConfig`
+
+4. **Created Release Testing Script** ✅
+   - Added `career/scripts/run_prod_release.sh` for testing production builds in release mode
+   - Made executable with proper permissions
+
+### Issue 2: Firestore Index Missing in Production
+**Problem**: Production app failing with `[cloud_firestore/failed-precondition]` error when querying recent career paths.
+
+**Root Cause**: Production Firebase project (`bigmints-xtara`) was missing Firestore composite indexes that existed in dev environment (`compass-bigmints`).
+
+**Solution Implemented**:
+
+1. **Exported Dev Indexes** ✅
+   - Switched to dev project: `firebase use compass-bigmints`
+   - Exported indexes: `firebase firestore:indexes > dev_indexes_export.json`
+
+2. **Updated Production Indexes** ✅
+   - Copied dev indexes to `firestore.indexes.json`
+   - Switched to prod project: `firebase use bigmints-xtara`
+   - Deployed indexes: `firebase deploy --only firestore:indexes`
+
+3. **Indexes Now Available in Production**:
+   - `ai_calls`: `type` + `userId` + `timestamp`
+   - `assessments`: `userId` + `createdAt`
+   - `assessments`: `userId` + `timestamp`
+   - `career_paths`: `anonymousUserId` + `createdAt`
+   - `career_paths`: `userId` + `createdAt` ⭐ **Fixed the error**
+
+### Issue 3: Pursue Career Button Not Working
+**Problem**: "Pursue Career" button was not working - should direct users to email signup screen for user conversion.
+
+**Root Cause**: Missing route definition for `/career-intro` in the app's routing configuration.
+
+**Solution Implemented**:
+
+1. **Added Missing Route** ✅
+   - Added `/career-intro` route to `getPages` in `career/lib/main_common.dart`
+   - Route accepts `careerPathId` and `assessmentData` arguments
+   - Navigates to `CareerIntroScreen` with proper argument validation
+   - Fallback to home screen if arguments are missing
+
+2. **Flow Now Working**:
+   - User clicks "Pursue Career" button → `/career-intro` → `CareerIntroScreen`
+   - `CareerIntroScreen` → "Get Started" button → `EmailSignUpScreen`
+   - `EmailSignUpScreen` → User conversion flow → Account creation/login
+
+### Environment Mapping Confirmed:
+- **Dev Environment**: `compass-bigmints` (shows debug features)
+- **Prod Environment**: `bigmints-xtara` (hides debug features in release builds)
+
+### Files Modified:
+- `career/lib/main_common.dart` - Debug banner, route addition
+- `.vscode/launch.json` - Release mode for prod
+- `career/lib/config/app_config.dart` - Enhanced debug control
+- `career/lib/features/home/screens/home_screen.dart` - Debug control updates
+- `career/lib/features/assessment/screens/assessment_screen.dart` - Debug control updates
+- `career/scripts/run_prod_release.sh` - New release testing script
+- `xtara-firebase/firestore.indexes.json` - Production indexes
+- `xtara-firebase/dev_indexes_export.json` - Dev indexes backup
+
+### Issue 4: App Icon Showing as Outline Instead of Filled
+**Problem**: App icon was displaying as an outline/unfilled star instead of the proper filled design.
+
+**Root Cause**: App icons were not properly generated from the source file and were using outdated/incorrect icon files.
+
+**Solution Implemented**:
+
+1. **Added Flutter Launcher Icons Package** ✅
+   - Added `flutter_launcher_icons: ^0.14.1` to dev dependencies in `career/pubspec.yaml`
+   - Configured to use `../assets/appicon-source.png` as source image
+
+2. **Configured App Icon Generation** ✅
+   - Added comprehensive flutter_launcher_icons configuration for all platforms
+   - Set `remove_alpha_ios: true` to comply with App Store requirements
+   - Configured web, Android, and iOS icon generation
+
+3. **Generated New App Icons** ✅
+   - Ran `flutter pub run flutter_launcher_icons:main` to generate icons
+   - Copied existing icons from assets to project folders as backup
+   - Cleaned and rebuilt project to ensure new icons are used
+
+4. **Icon Configuration**:
+   - **Android**: Generated all required mipmap densities (hdpi, mdpi, xhdpi, xxhdpi, xxxhdpi)
+   - **iOS**: Generated all required icon sizes with alpha channel removed
+   - **Web**: Generated with white background and Ocean Navy theme color
+   - **Source**: Uses `appicon-source.png` which contains the filled star design
+
+### Testing:
+- ✅ Debug features hidden in production release builds
+- ✅ Firestore queries working without index errors
+- ✅ Pursue Career button navigation working
+- ✅ User conversion flow functional
+- ✅ App icon now shows filled star design instead of outline
+
+## 6. Production Deployment Guide
+
+### Created: `career/docs/PRODUCTION_DEPLOYMENT_GUIDE.md`
+- **Purpose**: Comprehensive step-by-step guide for production deployments
+- **Covers**: 
+  - Pre-deployment checklist with environment setup
+  - Firebase project configuration verification
+  - Remote Config setup with required parameters
+  - Firestore indexes deployment (critical for app functionality)
+  - Cloud Functions deployment
+  - App building for Android, iOS, and Web
+  - App store submission process
+  - Pre-release testing procedures
+  - Analytics and monitoring setup
+  - Post-deployment verification steps
+  - Rollback procedures for emergencies
+  - Troubleshooting guide for common issues
+  - Quick reference commands
+  - Deployment log template
+
+### Key Features:
+- **Step-by-step instructions** with exact commands to run
+- **Verification steps** after each deployment phase
+- **Critical test cases** to validate functionality
+- **Platform-specific guidance** for Android, iOS, and Web
+- **Emergency rollback procedures** if issues occur
+- **Comprehensive checklists** to ensure nothing is missed
+- **Troubleshooting section** for common deployment issues
+
+### Benefits:
+- Prevents missing critical deployment steps
+- Ensures consistent deployment process
+- Reduces deployment errors and issues
+- Provides clear rollback procedures
+- Documents all Firebase services configuration
+- Includes Remote Config setup instructions
+- Covers all platforms (Android, iOS, Web)
+
+## Final Status - All Issues Resolved
+
+The production environment is now fully functional with:
+- ✅ Debug features properly hidden in production builds
+- ✅ All Firestore indexes deployed and working
+- ✅ Navigation flows working correctly
+- ✅ User conversion funnel functional
+- ✅ App icons displaying correctly
+- ✅ Comprehensive deployment documentation available
+
+The app is ready for production deployment following the detailed guide in `career/docs/PRODUCTION_DEPLOYMENT_GUIDE.md`. 
