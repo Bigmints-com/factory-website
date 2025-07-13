@@ -1,0 +1,283 @@
+# Project Xtara - Cursor Workspace Rules
+
+## 🏗️ PROJECT STRUCTURE OVERVIEW
+
+This workspace contains four main projects under the `project-xtara` umbrella:
+
+```
+project-xtara/
+├── xtara/                    # Next.js website (React/TypeScript)
+├── career/                   # Flutter mobile app
+├── career-ai/                # Python AI/ML scripts and services
+└── xtara-firebase/           # Consolidated Firebase operations
+```
+
+## 🎯 PROJECT-SPECIFIC RULES
+
+## Node
+Always "use nvm use 24" before running any commands
+
+### 📱 CAREER (Flutter App)
+**Location**: `career/`
+**Tech Stack**: Flutter, Dart, Firebase, GetX
+
+#### Development Rules
+- **Always read `career/docs/` first** before implementing features
+- Follow feature-based architecture in `career/lib/features/`
+- Use design tokens from `career/lib/theme/` - NEVER hard-code styles
+- Use GetX controllers for state management
+- Follow existing patterns in `career/lib/core/widgets/`
+
+#### Key Files
+- `career/lib/theme/colors.dart` - Color palette (Ocean Navy, Sky Blue, etc.)
+- `career/lib/theme/app_theme.dart` - App theming
+- `career/lib/core/widgets/` - Reusable components
+- `career/docs/` - Complete documentation
+
+#### Build Commands
+```bash
+cd career
+flutter build apk --release  # Android
+flutter build ios --release  # iOS
+flutter build web --release  # Web
+```
+
+### 🌐 XTARA (Website)
+**Location**: `xtara/`
+**Tech Stack**: Next.js, React, TypeScript, Tailwind CSS
+
+#### Development Rules
+- Use CSS variables in `xtara/src/app/globals.css` for theming
+- Follow component structure in `xtara/src/components/`
+- Use Tailwind classes with custom color palette
+- Maintain responsive design patterns
+
+#### Key Files
+- `xtara/src/app/globals.css` - CSS variables and typography
+- `xtara/tailwind.config.ts` - Tailwind configuration
+- `xtara/src/components/` - React components
+- `xtara/src/data/` - Content data files
+
+#### Build Commands
+```bash
+cd xtara
+npm run build
+npm run dev
+```
+
+### 🤖 CAREER-AI (Python AI/ML)
+**Location**: `career-ai/`
+**Tech Stack**: Python, Google Cloud, Vertex AI, Firebase
+
+#### Development Rules
+- Use virtual environments for Python dependencies
+- Follow the pipeline structure in `career-ai/pipeline/`
+- Use service account keys from `career-ai/serviceAccountKey.json`
+- Document all AI/ML processes in `career-ai/documentation/`
+
+#### Key Files
+- `career-ai/requirements.txt` - Python dependencies
+- `career-ai/pipeline/` - AI processing pipeline
+- `career-ai/dream_careers/` - Career data
+- `career-ai/documentation/` - AI system docs
+
+#### Run Commands
+```bash
+cd career-ai
+python -m venv venv
+source venv/bin/activate  # or `venv\Scripts\activate` on Windows
+pip install -r requirements.txt
+python run_pipeline.py
+```
+
+### 🔥 XTARA-FIREBASE (Firebase Operations)
+**Location**: `xtara-firebase/`
+**Tech Stack**: Firebase, Cloud Functions, Firestore
+
+#### Development Rules
+- **Consolidated Firebase operations** for all projects
+- **Multi-codebase functions**: career and career-ai functions
+- **Unified security rules** for all collections
+- **Consistent project configuration** across environments
+
+#### Key Areas
+- **Functions/career/**: Mobile app backend functions (career path generation)
+- **Functions/career-ai/**: AI pipeline functions (dream careers management)
+- **Firestore rules**: Unified security rules for all collections
+- **Firebase hosting**: Website hosting configuration
+- **Service accounts**: Separate keys for different environments
+
+#### Build Commands
+```bash
+cd xtara-firebase
+npm run install:all
+npm run deploy:functions
+npm run deploy:rules
+npm run deploy:hosting
+```
+
+## 🎨 DESIGN SYSTEM UNIFICATION
+
+### Color Palette (Shared Across All Projects)
+```
+Ocean Navy:    #003763  (Primary - Base dark)
+Sky Blue:      #61B3E4  (Accent - Primary highlight)
+Coral Orange:  #EF7521  (Motivational accent)
+Sun Gold:      #F6B333  (Secondary accent)
+Ivory White:   #FFFFFF  (Contrast base)
+Seafoam Teal:  #3CA6A6  (Tertiary accent)
+Cream Sand:    #F2E3D5  (Card background)
+```
+
+### Typography System
+- **Headings**: Merriweather (serif)
+- **Body**: Inter (sans-serif)
+- **Scale**: Consistent across web and mobile
+
+## 🚀 DEPLOYMENT WORKFLOW
+
+### Website Deployment
+```bash
+cd xtara
+npm run build
+# Deploy to hosting platform (Vercel, Netlify, etc.)
+```
+
+### Mobile App Deployment
+```bash
+cd career
+# Android
+flutter build apk --release
+# iOS
+flutter build ios --release
+# Upload to app stores
+```
+
+### Firebase Deployment
+```bash
+cd xtara-firebase
+npm run deploy:functions
+npm run deploy:rules
+npm run deploy:hosting
+# Or deploy specific codebases:
+npm run deploy:career
+npm run deploy:career-ai
+```
+
+### AI Pipeline Deployment
+```bash
+cd career-ai
+# Deploy to Google Cloud
+gcloud functions deploy <function_name> --runtime python39 --trigger-http
+```
+
+## 🔧 DEVELOPMENT WORKFLOW
+
+### Before Starting Any Task
+1. **Identify the correct project** (career, xtara, career-ai, xtara-firebase)
+2. **Read project-specific documentation** first
+3. **Check existing implementations** before creating new ones
+4. **Follow established patterns** within each project
+
+### Cross-Project Dependencies
+- **Color consistency**: Update all projects when changing the color palette
+- **Typography**: Maintain font consistency across web and mobile
+- **Content**: Sync career data between AI pipeline and mobile app
+- **Firebase**: Ensure consistent data structure across all projects
+
+### Code Quality Standards
+- **Documentation**: Always document new features
+- **Testing**: Write tests for critical functionality
+- **Performance**: Optimize for mobile and web performance
+- **Accessibility**: Ensure all components are accessible
+- **Security**: Follow security best practices for each platform
+
+## 📁 FILE ORGANIZATION RULES
+
+### Never Create Files In Wrong Locations
+- **Flutter code** → `career/lib/`
+- **Website code** → `xtara/src/`
+- **Python scripts** → `career-ai/`
+- **Firebase config** → `xtara-firebase/`
+
+### Import/Reference Rules
+- Use relative imports within projects
+- Use absolute imports for cross-project references
+- Always specify the project context in comments
+
+### Asset Management
+- **Images**: Store in respective project's assets folder
+- **Icons**: Use consistent icon libraries per project
+- **Fonts**: Maintain typography consistency across projects
+
+## 🎯 PROJECT-SPECIFIC COMMANDS
+
+### Setup Commands
+```bash
+# Flutter setup
+cd career && flutter pub get
+
+# Website setup
+cd xtara && npm install
+
+# Python setup
+cd career-ai && pip install -r requirements.txt
+
+# Firebase setup
+cd xtara-firebase && npm run install:all
+```
+
+### Development Commands
+```bash
+# Flutter development
+cd career && flutter run
+
+# Website development
+cd xtara && npm run dev
+
+# Python development
+cd career-ai && python script_name.py
+
+# Firebase emulator
+cd xtara-firebase && npm run emulators
+```
+
+## 🔍 DEBUGGING GUIDELINES
+
+### Project-Specific Debugging
+- **Flutter**: Use `flutter doctor` and Flutter Inspector
+- **Website**: Use browser dev tools and Next.js debugging
+- **Python**: Use logging and Python debugger
+- **Firebase**: Use Firebase console and emulator
+
+### Cross-Project Issues
+- Check data consistency between projects
+- Verify API endpoints and authentication
+- Ensure environment variables are set correctly
+- Test integration points between projects
+
+## 📚 DOCUMENTATION REQUIREMENTS
+
+### Always Document
+- New features and components
+- API changes and integrations
+- Deployment procedures
+- Configuration changes
+- Cross-project dependencies
+
+### Documentation Locations
+- `career/docs/` - Flutter app documentation
+- `career-ai/documentation/` - AI system documentation
+- `xtara-firebase/` - Firebase configuration docs
+- Project README files for setup instructions
+
+## 🚨 CRITICAL REMINDERS
+
+1. **Always identify the correct project** before making changes
+2. **Read existing documentation** before implementing features
+3. **Follow established patterns** within each project
+4. **Maintain consistency** across all projects
+5. **Test thoroughly** before deploying
+6. **Document changes** for future reference
+7. **Use the unified color palette** across all projects
+8. **Follow security best practices** for each platform 

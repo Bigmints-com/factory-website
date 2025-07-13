@@ -1,0 +1,31 @@
+{
+  "name": "xtara-firebase",
+  "version": "1.0.0",
+  "description": "Consolidated Firebase operations for Project Xtara",
+  "main": "index.js",
+  "scripts": {
+    "install:all": "npm install && cd functions && npm install",
+    "lint:all": "cd functions && npm run lint",
+    "deploy:functions": "firebase deploy --only functions",
+    "deploy:rules": "firebase deploy --only firestore:rules",
+    "deploy:hosting": "firebase deploy --only hosting",
+    "emulators": "firebase emulators:start",
+    "logs": "firebase functions:log"
+  },
+  "keywords": [
+    "firebase",
+    "functions",
+    "firestore",
+    "xtara",
+    "career",
+    "ai"
+  ],
+  "author": "Project Xtara Team",
+  "license": "MIT",
+  "devDependencies": {
+    "firebase-tools": "^13.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+} 
