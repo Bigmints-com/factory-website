@@ -101,7 +101,7 @@
             "name": "iOS Simulator (Prod)",
             "type": "dart",
             "request": "launch",
-            "program": "lib/main_prod.dart",
+            "program": "career/lib/main_prod.dart",
             "deviceId": "B8C83222-CC1D-47FA-A06E-E5A0D3461CBD",
             "preLaunchTask": "Copy iOS Prod Config"
         },
