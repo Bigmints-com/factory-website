@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!--
+    If you are serving your web app in a path other than the root, change the
+    href value below to reflect the base path you are serving from.
+
+    The path provided below has to start and end with a slash "/" in order for
+    it to work correctly.
+
+    For more details:
+    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
+
+    This is a placeholder for base href that will be replaced by the value of
+    the `--base-href` argument provided to `flutter build`.
+  -->
+  <base href="/">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="Xtara - Your career guidance companion. Discover your perfect career path with personalized assessments, expert insights, and comprehensive career planning tools.">
+  <meta name="keywords" content="career guidance, career planning, career assessment, job search, career development, professional growth, career counseling">
+  <meta name="author" content="Xtara">
+  <meta name="robots" content="index, follow">
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://xtara.app/">
+  <meta property="og:title" content="Xtara - Career Guidance">
+  <meta property="og:description" content="Discover your perfect career path with personalized guidance and comprehensive career planning tools.">
+  <meta property="og:image" content="icons/Icon-512.png">
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://xtara.app/">
+  <meta property="twitter:title" content="Xtara - Career Guidance">
+  <meta property="twitter:description" content="Discover your perfect career path with personalized guidance and comprehensive career planning tools.">
+  <meta property="twitter:image" content="icons/Icon-512.png">
+
+  <!-- PWA Meta Tags -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Xtara">
+  <meta name="application-name" content="Xtara">
+  <meta name="msapplication-TileColor" content="#1E2844">
+  <meta name="msapplication-config" content="browserconfig.xml">
+  <meta name="theme-color" content="#1E2844">
+
+  <!-- iOS Icons -->
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="icons/Icon-152.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/Icon-180.png">
+  <link rel="apple-touch-icon" sizes="167x167" href="icons/Icon-167.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/Icon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="icons/Icon-16.png">
+  <link rel="shortcut icon" href="favicon.ico">
+
+  <!-- Manifest -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- Preload critical resources -->
+  <link rel="preload" href="flutter_bootstrap.js" as="script">
+  <link rel="preload" href="icons/Icon-192.png" as="image">
+
+  <title>Xtara - Career Guidance</title>
+
+  <!-- Loading Screen Styles -->
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #1E2844 0%, #3EA9E1 100%);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+    
+    .loading-container {
+      text-align: center;
+      color: white;
+    }
+    
+    .loading-logo {
+      width: 120px;
+      height: 120px;
+      margin: 0 auto 24px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .loading-text {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    
+    .loading-subtitle {
+      font-size: 16px;
+      opacity: 0.8;
+      margin-bottom: 32px;
+    }
+    
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-top: 3px solid white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .progress-bar {
+      width: 200px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 2px;
+      margin: 16px auto 0;
+      overflow: hidden;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: white;
+      border-radius: 2px;
+      animation: progress 2s ease-in-out infinite;
+    }
+    
+    @keyframes progress {
+      0% { width: 0%; }
+      50% { width: 70%; }
+      100% { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Loading Screen -->
+  <div class="loading-container">
+    <div class="loading-logo">🚀</div>
+    <div class="loading-text">Xtara</div>
+    <div class="loading-subtitle">Career Guidance</div>
+    <div class="loading-spinner"></div>
+    <div class="progress-bar">
+      <div class="progress-fill"></div>
+    </div>
+  </div>
+
+  <script src="flutter_bootstrap.js" async></script>
+  
+  <!-- Service Worker Registration -->
+  <script>
+    // Let Flutter handle the main service worker registration
+    // Our custom service worker will be registered after Flutter loads
+    window.addEventListener('load', function() {
+      // Register our custom service worker for additional PWA features
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js')
+          .then(function(registration) {
+            console.log('Custom ServiceWorker registration successful');
+          })
+          .catch(function(err) {
+            console.log('Custom ServiceWorker registration failed');
+          });
+      }
+    });
+  </script>
+</body>
+</html> 
