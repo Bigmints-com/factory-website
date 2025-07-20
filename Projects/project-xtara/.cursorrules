@@ -100,6 +100,8 @@ python run_pipeline.py
 - **Unified security rules** for all collections
 - **Consistent project configuration** across environments
 
+- DEPLOY ONLY AFFECTED FUNCTIONS.
+
 #### Key Areas
 - **Functions/career/**: Mobile app backend functions (career path generation)
 - **Functions/career-ai/**: AI pipeline functions (dream careers management)
