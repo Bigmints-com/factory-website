@@ -18,17 +18,11 @@ We need to add a new content management to the app for admins.
     - podcast
     - article
 
-
 This feature should work on both web and mobile.
 Add entry point for the feature in the admin menu.
 access to the feature should be restricted to admins and editors only (isAdmin and isEditor from the user data)
 
-
 Read the rules and documentation before you start.
-
-
-
-
 
 I am looking the the way four features are implemented in the app:
 - stories management
@@ -42,7 +36,6 @@ I want to use stories management as a template for all other content management 
 
 I want to cover following aspects:
 
-
     - list of all content
         - search
         - filter
@@ -51,7 +44,6 @@ I want to cover following aspects:
     - add new content button 
     - edit content button
     - delete content button
-
 
     On the detail screen should accommodate following:
         - header
@@ -109,7 +101,42 @@ Check the existing py scripts to get the right prompts. I walso want to make sur
 
 
 
+________________________________________________________
+
+I want to build a new progressive profiling system for students. I want to build a subject wise performance tracker. based on the carriculum the user will have to input marks by sliding a percentage slider.
+
+Step 1:
+
+Check if the user already has selected the subjects. If yes go to step 2.
+
+Else the subject selector should ask the user to select the subjects they are studying with optional other subjects field where the user can enter the subject manually. Like aregional language, etc. The curriculum based subjects are available as a remote config file called carrculums.json. The grade and board are available in the assessment data.
+
+After completing the configuration we need to save the data in the user document under subjectsLearning field in the user document, 
+
+"subjectsLearning": [
+    "english",
+    "math",
+    "science",
+    "socialStudies"
+],
+
+Step 2:
 
 
+After the user has selected the subjects, we need to add a new field to the user document. Also build a UI to input the marks for each subject.
+
+"exam_performance": {
+    "exam_performance_id": {
+    "english": 75,
+    "math": 80,
+    "science": 85,
+    "socialStudies": 90,
+    "total": 330,
+    "timestamp": "2025-07-21T07:00:00Z"
+    }
+},
+
+
+But when resubmitting the form, we need to update the exam_performance field, but also add it a subcollection called "exam_performance" with a new id for comparing the previous and new values.
 
 

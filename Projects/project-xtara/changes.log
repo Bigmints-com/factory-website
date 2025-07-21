@@ -1,462 +1,672 @@
 # Changes Log
 
-## 2025-01-13 - Debug Badge & Pursue Career Button Fixes
-
-### Issue 1: Debug Badge Showing in Prod Version
-**Problem**: Debug badges and features were showing in production version when running from VS Code Android emulator.
-
-**Root Cause**: VS Code launch configuration was running `flutter run` (debug mode) instead of `flutter run --release` (release mode). The `kDebugMode` constant is `true` in debug builds regardless of flavor.
-
-**Solutions Implemented**:
-
-1. **Hidden Debug Banner** ✅
-   - Added `debugShowCheckedModeBanner: false` to `GetMaterialApp` in `career/lib/main_common.dart`
-   - Hides Flutter debug banner in all builds
-
-2. **Updated VS Code Launch Configuration** ✅
-   - Modified `.vscode/launch.json` "Android Emulator (Prod)" configuration
-   - Added `--release` flag to args: `["--flavor", "prod", "--release"]`
-   - Now runs prod version in release mode from VS Code
-
-3. **Enhanced Debug Control System** ✅
-   - Added `showDebugFeatures` property to `AppConfig` class in `career/lib/config/app_config.dart`
-   - Logic: `bool get showDebugFeatures => flavor == 'dev' || kDebugMode;`
-   - Updated debug feature checks in:
-     - `career/lib/features/home/screens/home_screen.dart` (admin button, debug navigation)
-     - `career/lib/features/assessment/screens/assessment_screen.dart` (debug assessment button)
-   - Added necessary imports for `AppConfig`
-
-4. **Created Release Testing Script** ✅
-   - Added `career/scripts/run_prod_release.sh` for testing production builds in release mode
-   - Made executable with proper permissions
-
-### Issue 2: Firestore Index Missing in Production
-**Problem**: Production app failing with `[cloud_firestore/failed-precondition]` error when querying recent career paths.
-
-**Root Cause**: Production Firebase project (`bigmints-xtara`) was missing Firestore composite indexes that existed in dev environment (`compass-bigmints`).
-
-**Solution Implemented**:
-
-1. **Exported Dev Indexes** ✅
-   - Switched to dev project: `firebase use compass-bigmints`
-   - Exported indexes: `firebase firestore:indexes > dev_indexes_export.json`
-
-2. **Updated Production Indexes** ✅
-   - Copied dev indexes to `firestore.indexes.json`
-   - Switched to prod project: `firebase use bigmints-xtara`
-   - Deployed indexes: `firebase deploy --only firestore:indexes`
-
-3. **Indexes Now Available in Production**:
-   - `ai_calls`: `type` + `userId` + `timestamp`
-   - `assessments`: `userId` + `createdAt`
-   - `assessments`: `userId` + `timestamp`
-   - `career_paths`: `anonymousUserId` + `createdAt`
-   - `career_paths`: `userId` + `createdAt` ⭐ **Fixed the error**
-
-### Issue 3: Pursue Career Button Not Working
-**Problem**: "Pursue Career" button was not working - should direct users to email signup screen for user conversion.
-
-**Root Cause**: Missing route definition for `/career-intro` in the app's routing configuration.
-
-**Solution Implemented**:
-
-1. **Added Missing Route** ✅
-   - Added `/career-intro` route to `getPages` in `career/lib/main_common.dart`
-   - Route accepts `careerPathId` and `assessmentData` arguments
-   - Navigates to `CareerIntroScreen` with proper argument validation
-   - Fallback to home screen if arguments are missing
-
-2. **Flow Now Working**:
-   - User clicks "Pursue Career" button → `/career-intro` → `CareerIntroScreen`
-   - `CareerIntroScreen` → "Get Started" button → `EmailSignUpScreen`
-   - `EmailSignUpScreen` → User conversion flow → Account creation/login
-
-### Environment Mapping Confirmed:
-- **Dev Environment**: `compass-bigmints` (shows debug features)
-- **Prod Environment**: `bigmints-xtara` (hides debug features in release builds)
-
-### Files Modified:
-- `career/lib/main_common.dart` - Debug banner, route addition
-- `.vscode/launch.json` - Release mode for prod
-- `career/lib/config/app_config.dart` - Enhanced debug control
-- `career/lib/features/home/screens/home_screen.dart` - Debug control updates
-- `career/lib/features/assessment/screens/assessment_screen.dart` - Debug control updates
-- `career/scripts/run_prod_release.sh` - New release testing script
-- `xtara-firebase/firestore.indexes.json` - Production indexes
-- `xtara-firebase/dev_indexes_export.json` - Dev indexes backup
-
-### Issue 4: App Icon Showing as Outline Instead of Filled
-**Problem**: App icon was displaying as an outline/unfilled star instead of the proper filled design.
-
-**Root Cause**: App icons were not properly generated from the source file and were using outdated/incorrect icon files.
-
-**Solution Implemented**:
-
-1. **Added Flutter Launcher Icons Package** ✅
-   - Added `flutter_launcher_icons: ^0.14.1` to dev dependencies in `career/pubspec.yaml`
-   - Configured to use `../assets/appicon-source.png` as source image
-
-2. **Configured App Icon Generation** ✅
-   - Added comprehensive flutter_launcher_icons configuration for all platforms
-   - Set `remove_alpha_ios: true` to comply with App Store requirements
-   - Configured web, Android, and iOS icon generation
-
-3. **Generated New App Icons** ✅
-   - Ran `flutter pub run flutter_launcher_icons:main` to generate icons
-   - Copied existing icons from assets to project folders as backup
-   - Cleaned and rebuilt project to ensure new icons are used
-
-4. **Icon Configuration**:
-   - **Android**: Generated all required mipmap densities (hdpi, mdpi, xhdpi, xxhdpi, xxxhdpi)
-   - **iOS**: Generated all required icon sizes with alpha channel removed
-   - **Web**: Generated with white background and Ocean Navy theme color
-   - **Source**: Uses `appicon-source.png` which contains the filled star design
-
-### Testing:
-- ✅ Debug features hidden in production release builds
-- ✅ Firestore queries working without index errors
-- ✅ Pursue Career button navigation working
-- ✅ User conversion flow functional
-- ✅ App icon now shows filled star design instead of outline
-
-## 6. Production Deployment Guide
-
-### Created: `career/docs/PRODUCTION_DEPLOYMENT_GUIDE.md`
-- **Purpose**: Comprehensive step-by-step guide for production deployments
-- **Covers**: 
-  - Pre-deployment checklist with environment setup
-  - Firebase project configuration verification
-  - Remote Config setup with required parameters
-  - Firestore indexes deployment (critical for app functionality)
-  - Cloud Functions deployment
-  - App building for Android, iOS, and Web
-  - App store submission process
-  - Pre-release testing procedures
-  - Analytics and monitoring setup
-  - Post-deployment verification steps
-  - Rollback procedures for emergencies
-  - Troubleshooting guide for common issues
-  - Quick reference commands
-  - Deployment log template
-
-### Key Features:
-- **Step-by-step instructions** with exact commands to run
-- **Verification steps** after each deployment phase
-- **Critical test cases** to validate functionality
-- **Platform-specific guidance** for Android, iOS, and Web
-- **Emergency rollback procedures** if issues occur
-- **Comprehensive checklists** to ensure nothing is missed
-- **Troubleshooting section** for common deployment issues
-
-### Benefits:
-- Prevents missing critical deployment steps
-- Ensures consistent deployment process
-- Reduces deployment errors and issues
-- Provides clear rollback procedures
-- Documents all Firebase services configuration
-- Includes Remote Config setup instructions
-- Covers all platforms (Android, iOS, Web)
-
-## Final Status - All Issues Resolved
-
-The production environment is now fully functional with:
-- ✅ Debug features properly hidden in production builds
-- ✅ All Firestore indexes deployed and working
-- ✅ Navigation flows working correctly
-- ✅ User conversion funnel functional
-- ✅ App icons displaying correctly
-- ✅ Comprehensive deployment documentation available
-
-The app is ready for production deployment following the detailed guide in `career/docs/PRODUCTION_DEPLOYMENT_GUIDE.md`.
-
-## 2025-01-13 - Admin Dream Careers Menu Integration
-
-### Added Dream Careers to Admin Menu System
-
-**Features Implemented**:
-
-1. **Admin Dashboard Menu Item** ✅
-   - Added "Dream Careers Management" to admin dashboard screen
-   - Icon: `Icons.star` for visual consistency
-   - Route: `/admin-dream-careers` for direct navigation
-
-2. **Unified Admin Dashboard Access** ✅
-   - Added "Unified Admin Dashboard" menu item
-   - Provides access to the modern admin interface with Dream Careers card
-   - Route: `/admin-unified` for comprehensive admin management
-
-3. **Route Configuration** ✅
-   - Added `/admin-dream-careers` route in `main.dart`
-   - Uses `BaseAdminWebLayout<DreamCareer>` with `DreamCareersAdminConfig`
-   - Integrated with existing admin controller system
-   - Added `/admin-unified` route for unified admin interface
-
-4. **Navigation Integration** ✅
-   - Dream Careers accessible from main admin dashboard
-   - Unified admin dashboard provides modern card-based interface
-   - Consistent navigation patterns with existing admin features
-   - Mobile-responsive design with proper routing
-
-### Admin Menu Structure:
-- **Admin Dashboard** (`/admin`)
-  - Summaries
-  - Stories Management
-  - Challenges Management
-  - **Dream Careers Management** ⭐ **NEW**
-  - RAG Test
-  - Dual-Mode RAG
-  - **Unified Admin Dashboard** ⭐ **NEW**
-
-- **Unified Admin Dashboard** (`/admin-unified`)
-  - Stories (card-based interface)
-  - Challenges (card-based interface)
-  - **Dream Careers** (card-based interface) ⭐ **NEW**
-  - Assessments (coming soon)
-  - Analytics (coming soon)
-  - Settings (coming soon)
-
-### Files Modified:
-- `career/lib/features/admin/screens/admin_dashboard_screen.dart` - Added menu items
-- `career/lib/main.dart` - Added route configurations
-- `changes.log` - Documentation update
-
-### Benefits:
-- ✅ Easy access to Dream Careers management from admin menu
-- ✅ Consistent navigation with existing admin features
-- ✅ Both traditional and modern admin interfaces available
-- ✅ Mobile-responsive design
-- ✅ Proper route configuration and controller integration
-
-The Dream Careers admin feature is now fully integrated into the admin menu system and accessible through multiple entry points for maximum convenience.
-
-## 2025-01-13 - Dream Career Voting Menu Integration
-
-### Added Dream Career Voting to Admin Menu
-
-**Features Implemented**:
-
-1. **Admin Dashboard Menu Item** ✅
-   - Added "Dream Career Voting" to admin dashboard screen
-   - Icon: `Icons.thumbs_up_down` for voting interface
-   - Route: `/career-voting` for slideshow voting interface
-
-2. **Dream Career Voting System** ✅
-   - **Purpose**: Slideshow interface for users to vote up, down, skip, and delete dream careers
-   - **Features**: 
-     - Progress tracking (Career X of Y)
-     - Vote buttons (thumbs up/down, skip, delete)
-     - Filter by domain and review status
-     - Analytics and statistics
-     - Role-based access (admin vs editor)
-   - **Route**: `/career-voting` → `DreamCareerVotingScreen`
-   - **Controller**: `DreamCareerVotingController` with GetX state management
-   - **Service**: `DreamCareerVotingService` for Firebase operations
-   - **Widget**: `DreamCareerVotingCard` for individual career display
-
-3. **Admin Menu Structure Updated**:
-   - **Admin Dashboard** (`/admin`)
-     - Summaries
-     - Stories Management
-     - Challenges Management
-     - Dream Careers Management
-     - **Dream Career Voting** ⭐ **NEW**
-     - RAG Test
-     - Dual-Mode RAG
-     - Unified Admin Dashboard
-
-### Files Modified:
-- `career/lib/features/admin/screens/admin_dashboard_screen.dart` - Added Dream Career Voting menu item
-- `changes.log` - Documentation update
-
-### Benefits:
-- ✅ Easy access to Dream Career Voting from admin menu
-- ✅ Slideshow interface for efficient career review
-- ✅ Vote tracking and analytics
-- ✅ Role-based permissions
-- ✅ Consistent navigation with existing admin features
-
-The Dream Career Voting system is now accessible through the admin menu and provides a comprehensive slideshow interface for reviewing and voting on dream careers.
-
-## 2025-01-13 - Dream Career Voting Enhancements
-
-### Added Delete Functionality and Full-Screen Layout
-
-**Features Implemented**:
-
-1. **Delete Dream Career Functionality** ✅
-   - Added `deleteDreamCareer()` method to `DreamCareerVotingService`
-   - Added `deleteCurrentCareer()` method to `DreamCareerVotingController`
-   - Admin-only access with proper permission checks
-   - Confirmation dialog before deletion
-   - Analytics tracking for deleted careers
-   - Automatic list management after deletion
-
-2. **Full-Screen Layout** ✅
-   - Removed `BaseCard` widget wrapper
-   - Converted to full-screen container layout
-   - Improved content organization with header, content, and action sections
-   - Better responsive design for all screen sizes
-   - Enhanced visual hierarchy and spacing
-
-3. **Enhanced UI Components** ✅
-   - Custom tag containers replacing `InfoChip` components
-   - Improved button layout with delete button
-   - Better visual styling for score and domain tags
-   - Enhanced content sections with proper spacing
-   - Loading state improvements
-
-4. **Delete Button Integration** ✅
-   - Added delete button to voting card interface
-   - Full-width delete button below main action buttons
-   - Red styling to indicate destructive action
-   - Proper confirmation dialog with career title
-   - Error handling and user feedback
-
-### Technical Implementation:
-
-**Service Layer**:
-- `DreamCareerVotingService.deleteDreamCareer()` - Firebase deletion with admin checks
-- Proper error handling and logging
-- User authentication and permission validation
-
-**Controller Layer**:
-- `DreamCareerVotingController.deleteCurrentCareer()` - Business logic for deletion
-- Confirmation dialog using GetX
-- Analytics tracking for deleted careers
-- List management and navigation updates
-
-**UI Layer**:
-- `DreamCareerVotingCard` - Complete redesign for full-screen layout
-- Removed dependency on `BaseCard` and `InfoChip` components
-- Custom styling for all UI elements
-- Improved responsive design
-
-### Files Modified:
-- `career/lib/features/career_paths/services/dream_career_voting_service.dart` - Added delete functionality
-- `career/lib/features/career_paths/controllers/dream_career_voting_controller.dart` - Added delete logic and confirmation
-- `career/lib/features/career_paths/widgets/dream_career_voting_card.dart` - Complete redesign for full-screen layout
-- `career/lib/features/career_paths/screens/dream_career_voting_screen.dart` - Updated to pass delete callback
-- `changes.log` - Documentation update
-
-### Benefits:
-- ✅ Full-screen layout provides better content visibility
-- ✅ Delete functionality allows content curation
-- ✅ Admin-only deletion ensures data integrity
-- ✅ Confirmation dialog prevents accidental deletions
-- ✅ Improved UI/UX with better visual hierarchy
-- ✅ Enhanced responsive design for all devices
-- ✅ Better error handling and user feedback
-
-The Dream Career Voting system now provides a comprehensive full-screen interface with delete functionality for effective content management and curation.
-
-## 2025-01-13 - Dream Career Model Updates and Enhanced Voting System
-
-### Updated Dream Career Model Structure
-
-**Major Changes**:
-
-1. **Removed Domain Field** ✅
-   - Removed `domain` field from `DreamCareer` model
-   - Updated all references to use `careerCluster` instead
-   - Updated constructor, fromMap, and toMap methods
-
-2. **Enhanced VoteData Model** ✅
-   - Added `skips` field to track skipped careers
-   - Added `flags` field for career status management
-   - Added helper methods for flag checking
-   - Updated fromMap and toMap methods
-
-3. **New Flag System** ✅
-   - `deleted` - Career has been deleted
-   - `refinementRequired` - Career needs content refinement
-   - `unpublished` - Career is not published
-   - `needsVerification` - Career needs verification
-   - Helper methods: `isDeleted`, `needsRefinement`, `isUnpublished`, `needsVerification`
-
-### Enhanced Voting Service
-
-**New Methods**:
-
-1. **Skip Career Functionality** ✅
-   - `skipCareer(String careerId)` - Records career skip
-   - Proper permission checks (editor only)
-   - Transaction-based updates
-   - Analytics tracking
-
-2. **Flag Management** ✅
-   - `updateFlag(String careerId, String flag, bool add)` - Add/remove flags
-   - Admin-only access for flag management
-   - Transaction-based updates
-   - Proper error handling
-
-3. **Updated Filtering** ✅
-   - Changed from `domainFilter` to `careerClusterFilter`
-   - Updated `getAvailableCareerClusters()` method
-   - Updated statistics to use career cluster breakdown
-
-### Enhanced Voting Controller
-
-**Updated Methods**:
-
-1. **Filter Management** ✅
-   - `setCareerClusterFilter()` - Set career cluster filter
-   - `clearCareerClusterFilter()` - Clear career cluster filter
-   - Updated analytics tracking with career cluster data
-
-2. **Skip Functionality** ✅
-   - `skipCareer()` - Now async with proper service calls
-   - Loading states and error handling
-   - Analytics tracking for skipped careers
-
-3. **Updated References** ✅
-   - All `domain` references changed to `careerCluster`
-   - Updated method names and variable names
-   - Updated analytics parameters
-
-### Enhanced UI Components
-
-**Updated Components**:
-
-1. **Voting Screen** ✅
-   - Updated filter dialog labels ("Domain" → "Career Cluster")
-   - Updated method calls to use new controller methods
-   - Updated filter display and management
-
-2. **Voting Card** ✅
-   - Already updated to use `careerCluster` field
-   - Full-screen layout maintained
-   - Delete functionality preserved
-
-### Technical Implementation Details
-
-**Model Changes**:
-- `DreamCareer.domain` → `DreamCareer.careerCluster`
-- `VoteData` now includes `skips` and `flags` fields
-- Enhanced helper methods for flag management
-
-**Service Changes**:
-- `getAllDreamCareers(domainFilter:)` → `getAllDreamCareers(careerClusterFilter:)`
-- `getAvailableDomains()` → `getAvailableCareerClusters()`
-- Added `skipCareer()` and `updateFlag()` methods
-
-**Controller Changes**:
-- `setDomainFilter()` → `setCareerClusterFilter()`
-- `clearDomainFilter()` → `clearCareerClusterFilter()`
-- `skipCareer()` now async with service integration
-
-### Files Modified:
-- `career/lib/features/career_paths/models/dream_career_model.dart` - Complete model restructure
-- `career/lib/features/career_paths/services/dream_career_voting_service.dart` - Enhanced service methods
-- `career/lib/features/career_paths/controllers/dream_career_voting_controller.dart` - Updated controller logic
-- `career/lib/features/career_paths/screens/dream_career_voting_screen.dart` - Updated UI references
-- `changes.log` - Documentation update
-
-### Benefits:
-- ✅ Consistent data structure with actual dream career JSON format
-- ✅ Enhanced voting system with skip tracking
-- ✅ Comprehensive flag system for career status management
-- ✅ Better analytics with career cluster breakdown
-- ✅ Improved error handling and user feedback
-- ✅ Maintained all existing functionality while adding new features
-
-The Dream Career Voting system now fully aligns with the actual data structure and provides enhanced functionality for career management and curation. 
+## 2024-12-19 - Profile Screen Academic Links & Split Subject/Performance Screens
+
+### 🎯 **Enhanced Profile Screen with Academic Management**
+
+#### **📚 New Academic Information Section**
+- **Academic Profile Display**: Shows user's board, grade, and stream configuration
+- **Manage Subjects Card**: Quick access to subject selection screen with count indicator
+- **Update Exam Marks Card**: Easy access to exam performance screen with last updated info
+- **Smart Navigation**: Context-aware routing with helpful validation messages
+- **Visual Design**: Color-coded cards with intuitive icons and clear information hierarchy
+
+#### **🎨 Profile Screen Features**
+- **Real-time Data**: Displays current academic configuration from user document
+- **Status Indicators**: Shows number of selected subjects and last exam update
+- **Conditional Logic**: Guides users to select subjects before adding exam marks
+- **Elegant UI**: Clean card-based design with proper spacing and visual feedback
+- **Timestamp Formatting**: Human-readable "last updated" times (Today, Yesterday, X days ago)
+
+### **📱 User Experience Flow**
+
+#### **Academic Profile Card:**
+- Shows education board (CBSE, ICSE, etc.)
+- Displays current grade (Class 10/12)
+- Includes stream information for Class 12 students
+- Fallback message for incomplete assessment data
+
+#### **Subject Management:**
+- "Manage Subjects" with subject count
+- Direct navigation to SubjectSelectionScreen
+- Edit mode (not initial setup)
+
+#### **Exam Performance:**
+- "Update Exam Marks" with last updated time
+- Smart validation - prompts to select subjects first if none selected
+- Direct navigation to ExamPerformanceScreen
+- Helpful snackbar with subject selection option
+
+### **🔧 Technical Implementation**
+
+#### **Route Configuration:**
+- Added `/subject-selection` route with arguments support
+- Added `/exam-performance` route with arguments support
+- Proper authentication guards for both routes
+- Support for initial setup vs. editing flows
+
+#### **Navigation Arguments:**
+- `isInitialSetup`: Boolean to differentiate initial setup from editing
+- `selectedSubjects`: Pre-selected subjects for exam performance screen
+- Context-aware navigation with proper argument passing
+
+### **🧹 Exam Performance Screen Cleanup**
+
+#### **Simplified Interface:**
+- **Removed Edit Subjects Button**: Users must edit subjects from profile, keeping the flow clean
+- **Removed Totals & Averages**: Eliminated unnecessary calculations and display cards
+- **Single Save Button**: Only the bottom action bar save button remains for cleaner UX
+- **Streamlined Focus**: Interface now focuses purely on marks input without distractions
+
+#### **Enhanced User Experience:**
+- **Cleaner Layout**: Removed visual clutter from summary cards and edit options
+- **Clear Purpose**: Screen is now dedicated solely to marks input
+- **Simplified Navigation**: No confusing secondary actions or edit paths
+- **Better Message**: Helpful text guides users to profile for subject management
+
+### **🔄 Smart Redirection for Empty Subject Lists**
+
+#### **Automatic Subject Selection Flow:**
+- **Empty Subjects Detection**: Checks if user has selected subjects when opening exam performance screen
+- **Helpful Message**: Shows informative snackbar "Please select your subjects first"
+- **Automatic Redirect**: Seamlessly redirects to subject selection screen after brief delay
+- **Flow Protection**: Only applies to regular usage, not initial setup flow
+
+#### **Improved User Experience:**
+- **Prevents Dead Ends**: Users never get stuck on exam screen without subjects
+- **Guided Flow**: Clear path from exam marks → subject selection → back to exam marks
+- **Smooth Transition**: Brief snackbar followed by automatic navigation
+- **Context Preservation**: Maintains non-initial-setup mode for proper flow
+
+### **✅ Pre-Selected Subjects in Management Mode**
+
+#### **Enhanced Subject Selection:**
+- **Previously Selected Maintained**: When managing subjects, all currently selected subjects appear as selected
+- **Visual Consistency**: Languages and other subjects show proper selection state
+- **Widget State Sync**: Added `didUpdateWidget` to handle parent state changes
+- **Debug Logging**: Added debug prints to track subject initialization and updates
+
+#### **Technical Implementation:**
+- **Initial State**: Widget properly initializes with `initialSubjects` from parent
+- **State Updates**: Handles changes when parent updates selected subjects list
+- **Visual Feedback**: FilterChips show correct selected state for existing subjects
+- **Data Flow**: Ensures consistent state between screen and widget components
+
+### **✅ Cursor Rules Compliance (90%+ Target)**
+
+#### **Enhanced Compliance Standards:**
+- **Analytics Integration**: Added `AnalyticsMixin` to both screens for automatic screen view tracking
+- **State Management**: Using GetX pattern with `Get.find<>()` for dependency injection
+- **Design Tokens**: Strictly using `career/lib/theme/colors.dart` and `app_theme.dart` (no hardcoded styles)
+- **Navigation**: Using `PlatformAppBar` and GetX navigation throughout
+- **Device Responsiveness**: Implementing `DeviceInfoService` with context extensions (`context.isLargeWeb`)
+- **Loading Patterns**: Integrated `LoadingOverlay` for user-friendly loading states
+
+#### **Critical Bug Fixes:**
+- **setState During Build**: Fixed `didUpdateWidget` to avoid `setState()` during build phase by updating state directly then triggering rebuild via `addPostFrameCallback`
+- **Widget Lifecycle**: Proper handling of parent-child state synchronization with mounted checks
+- **Error Handling**: Graceful handling of async operations and state changes
+- **Debug Console**: Removed debug prints to prevent potential side effects and console noise
+- **Flutter Dependencies**: Fixed widget disposal and lifecycle management to prevent assertion errors
+
+#### **Code Quality Improvements:**
+- **Consistent Imports**: Standardized import patterns for core widgets and services
+- **Mixin Usage**: Proper implementation of `AnalyticsMixin` for automated tracking
+- **Responsive Layout**: Two-column layout for large web, mobile layout for small screens
+- **Service Layer**: Proper separation with services (`SubjectSelectionService`, `ExamPerformanceService`)
+
+### **✅ 100% Brand Colors & BaseCard Compliance**
+
+#### **Brand Color Standardization:**
+- **Eliminated Hardcoded Colors**: Replaced all `Colors.grey`, `Colors.white`, `Colors.purple`, etc. with brand colors
+- **Consistent Brand Palette**: Using `kAccentColor` (Sky Blue), `kTertiaryColor` (Seafoam Teal), `kHighlightColor` (Coral Orange)
+- **Proper Color Mapping**: 
+  - Primary actions: `kAccentColor` (Sky Blue)
+  - Success states: `kTertiaryColor` (Seafoam Teal)  
+  - Highlights: `kHighlightColor` (Coral Orange)
+  - Text: `kTextColor` (Ocean Navy)
+  - Backgrounds: `kBackgroundColor` (Ivory White)
+  - Borders/Dividers: `kDividerColor`
+
+#### **BaseCard Widget Implementation:**
+- **Category Cards**: Replaced custom `Container` with `BaseCard` for category groupings
+- **Action Buttons**: Used `BaseCard` for bottom action containers
+- **Progress Indicators**: Implemented `BaseCard` for step indicators
+- **Consistent Structure**: Following Bootstrap-like card structure with header, body, footer
+- **Proper Padding**: Using `bodyPadding` parameter for consistent spacing
+
+#### **UI Component Improvements:**
+- **Icons**: Using brand colors (`kIvoryWhite` for contrast, `kAccentColor` for primary)
+- **Buttons**: Standardized button colors with proper contrast ratios
+- **FilterChips**: Using brand color palette for selection states
+- **Progress Elements**: Consistent color scheme throughout navigation flow
+
+### **✅ Style Override Elimination (In Progress)**
+
+#### **Removed Hardcoded Style Overrides:**
+- **Theme Integration**: Replaced hardcoded colors with `theme.colorScheme` properties
+- **Text Styling**: Removed manual `TextStyle()` overrides in favor of `theme.textTheme`
+- **Category Colors**: Using theme-based color mapping for subject categories
+- **Method Signatures**: Updated methods to accept `ThemeData theme` parameter for consistency
+- **Container Decorations**: Replaced custom `BoxDecoration` colors with theme containers
+
+#### **Theme-Based Color Mapping:**
+- **Primary Actions**: `theme.colorScheme.primary` instead of `kAccentColor`
+- **Tertiary Elements**: `theme.colorScheme.tertiary` instead of `kSeafoamTeal`
+- **Error States**: `theme.colorScheme.error` instead of `kCoralOrange`
+- **Surface Elements**: `theme.colorScheme.surface` instead of `kBackgroundColor`
+- **Text Colors**: `theme.textTheme.*` instead of manual color overrides
+- **Container Colors**: `theme.colorScheme.*Container` for background elements
+
+#### **Compliance Benefits:**
+- **Theme Consistency**: All components now follow Material Design 3 color system
+- **Maintainability**: Color changes propagate automatically through theme updates
+- **Accessibility**: Proper contrast ratios maintained through theme system
+- **No More Overrides**: Elimination of cursor rules violations for manual styling
+- **Future-Proof**: Easy adaptation for dark mode and theme variations
+
+### **✅ Subject Selection UI Simplification**
+
+#### **Complete UI Overhaul:**
+- **Removed FilterChips**: Replaced complex FilterChip layout with simple CheckboxListTile
+- **BaseCard Structure**: All categories now use proper BaseCard with CardHeader and listGroup
+- **Consistent Layout**: Every subject category follows identical card pattern
+- **Custom Subjects**: Simplified to BaseCard with CardHeader, listGroup, and CardFooter
+
+#### **New UI Components:**
+- **CheckboxListTile**: Clean checkbox interface for subject selection
+- **CardHeader**: Category name with icon and count display  
+- **ListGroup**: Subjects displayed as clean list items with checkboxes
+- **CardFooter**: Add custom subjects input field with button
+
+#### **User Experience Improvements:**
+- **Simpler Interaction**: Single tap on checkbox instead of FilterChip selection
+- **Cleaner Design**: Consistent card-based layout throughout
+- **Better Accessibility**: Standard checkbox controls for screen readers
+- **Faster Performance**: Eliminated complex Wrap layouts and FilterChip rendering
+- **Delete Custom**: Clear delete button for custom subjects
+
+#### **Technical Benefits:**
+- **Reduced Complexity**: Eliminated category color management and custom styling
+- **BaseCard Compliance**: 100% usage of cursor rules requirement for list-based UI
+- **Theme Integration**: All components use theme colors automatically
+- **Maintainable Code**: Simpler widget tree and fewer custom decorations
+
+---
+
+## 2024-12-19 - Split Subject Selection & Exam Performance Into Separate Screens
+
+### 🎯 **Enhanced User Experience: Two-Screen Flow**
+
+#### **📚 Dedicated Subject Selection Screen**
+- **SubjectSelectionScreen**: One-time subject setup or editing
+- **Profile-Based Filtering**: Shows only subjects relevant to user's board, grade, and stream
+- **Academic Profile Header**: Displays current board, grade, and stream configuration
+- **Smart Navigation**: Different flows for initial setup vs. editing
+- **Unsaved Changes Protection**: Warns users before leaving with unsaved changes
+
+#### **📊 Dedicated Exam Performance Screen**
+- **ExamPerformanceScreen**: Focused on marks input and updates
+- **Subject Summary**: Shows selected subjects with edit option
+- **Previous Performance Tracking**: Displays previous marks and improvement trends
+- **Smart Loading**: Loads previous marks as starting values
+- **Performance Comparison**: Shows improvement/decline from previous submissions
+
+### **🎨 User Flow Design**
+
+#### **Initial Setup Flow:**
+```
+Assessment Complete → Subject Selection → Exam Performance → Home
+```
+
+#### **Editing Flow:**
+```
+Profile/Settings → Subject Selection → Save & Back
+Home/Profile → Exam Performance → Save & Back
+```
+
+### **✨ Key Features**
+
+#### **Subject Selection Screen:**
+- **One-Time Setup**: Users select subjects once during initial onboarding
+- **Easy Editing**: Can be accessed later from profile/settings
+- **Progress Indicator**: Shows "Step 1: Subject Selection" during initial setup
+- **Category Organization**: Subjects grouped by curriculum type
+- **Smart Validation**: Ensures at least one subject is selected
+- **Responsive Design**: Two-column layout on large screens, single column on mobile
+
+#### **Exam Performance Screen:**
+- **Occasional Updates**: Users update marks when they have new exam results
+- **Pre-filled Values**: Shows previous marks as starting values
+- **Performance Insights**: Displays trends and improvements
+- **Subject Management**: Quick access to edit subjects
+- **Progress Context**: Shows "Step 2: Exam Performance" during initial setup
+- **Empty State**: Helpful message if no subjects are selected
+
+### **📱 Responsive Design**
+
+#### **Large Web Screens:**
+- **Two-column layout** with navigation/summary on left, main content on right
+- **Progress indicators** and summaries in left sidebar
+- **Efficient space usage** for desktop/tablet landscape
+
+#### **Mobile Screens:**
+- **Single-column layout** with top progress bar
+- **Sticky action buttons** at bottom
+- **Touch-friendly sliders** and controls
+- **Optimized scrolling** experience
+
+### **🔄 Navigation & State Management**
+
+#### **Smart Navigation:**
+- **Context-aware routing**: Different destinations based on setup vs. editing
+- **Route arguments**: Pass data between screens efficiently
+- **Back button handling**: Custom behavior for unsaved changes
+- **Progress tracking**: Clear indication of current step
+
+#### **State Management:**
+- **Real-time validation**: Immediate feedback on user actions
+- **Unsaved changes detection**: Prevents data loss
+- **Loading states**: Clear indicators during async operations
+- **Error handling**: User-friendly error messages
+
+### **✅ Benefits**
+
+#### **Better User Experience:**
+- **Clearer separation** of concerns (subjects vs. marks)
+- **Reduced cognitive load** - one task per screen
+- **Better mobile experience** with focused interfaces
+- **Intuitive flow** that matches user mental model
+
+#### **Technical Advantages:**
+- **Modular architecture** with separate screens
+- **Easier maintenance** and testing
+- **Flexible navigation** for different use cases
+- **Reusable components** across different contexts
+
+#### **User Behavior Optimization:**
+- **Subjects selected once** - reduces friction
+- **Marks updated occasionally** - when needed
+- **Clear progress indication** during setup
+- **Easy editing access** from profile
+
+---
+
+## 2024-12-19 - Assessment-to-User Document Sync & Personalized Subject Display
+
+### 🎯 **Enhanced Assessment Completion Process**
+
+#### **📊 Automatic User Document Updates**
+- **Assessment Sync**: All assessment results now automatically sync to user document upon completion
+- **Profile Enrichment**: User profile data includes academic information (board, grade, stream, interests, etc.)
+- **Data Accessibility**: Assessment data available directly from user document without querying assessments collection
+- **Metadata Tracking**: Tracks assessment completion status and retake information
+
+#### **🔧 Enhanced AssessmentController**
+**New Methods:**
+- `_updateUserDocumentWithAssessmentData()`: Syncs assessment results to user document
+- `getUserProfile()`: Gets comprehensive user profile combining user document and assessment data
+- **Smart Merging**: Preserves existing user data while adding assessment results
+- **Error Handling**: Graceful fallback if user document update fails
+
+#### **👤 Personalized Subject Display Widget**
+- **UserSubjectsDisplayWidget**: Shows subjects filtered by user's specific academic profile
+- **Profile-Based Filtering**: Only displays subjects relevant to user's board, grade, and stream
+- **Academic Profile Header**: Shows user's current board, grade, and stream configuration
+- **Selected Subjects Summary**: Highlights user's currently selected subjects
+- **Stream-Specific Categories**: Organizes subjects by curriculum-appropriate categories
+
+### **📚 Smart Subject Filtering Examples**
+
+#### **CBSE Science Student (Class 12):**
+- **Shows**: Languages, Science Stream subjects (Physics, Chemistry, Math, Biology)
+- **Hides**: Commerce Stream, Humanities Stream subjects
+- **Includes**: Skill subjects, Optional subjects applicable to all streams
+
+#### **State Board Commerce Student (Class 12):**
+- **Shows**: Languages, Commerce Stream subjects (Accountancy, Business Studies, Economics)
+- **Hides**: Science Stream, Arts Stream subjects
+- **Includes**: Vocational subjects, Additional subjects
+
+#### **ICSE Student (Class 10):**
+- **Shows**: Languages, Core subjects, Electives appropriate for ICSE curriculum
+- **Hides**: Board-specific subjects not applicable to ICSE
+
+### **🎨 User Experience Features**
+- **Automatic Detection**: Reads user's academic profile from their assessment data
+- **Visual Indicators**: Color-coded categories and selected subjects highlighting
+- **Error States**: Helpful messages for incomplete profiles or missing data
+- **Edit Integration**: Optional edit button for modifying subject selection
+- **Responsive Design**: Clean, organized display of categorized subjects
+
+### **📊 Data Flow**
+```
+Assessment Completion → User Document Update → Profile-Based Subject Filtering
+```
+
+1. **Assessment Completed**: Results saved to assessments collection
+2. **Auto-Sync**: Assessment results copied to user document
+3. **Profile Reading**: Widget reads board/grade/stream from user profile
+4. **Subject Filtering**: Shows only relevant subjects for user's configuration
+5. **Visual Display**: Organized by categories with selection indicators
+
+### **✅ Benefits**
+- **Personalized Experience**: Students see only subjects relevant to their curriculum
+- **Reduced Confusion**: No irrelevant subjects cluttering the interface
+- **Fast Access**: User profile data available without additional queries
+- **Curriculum Accuracy**: Subjects match exact board and stream requirements
+- **Better UX**: Clean, organized display with clear visual indicators
+
+---
+
+## 2024-12-19 - Enhanced Exam Performance Data Structure
+
+### 🎯 **Improved Exam Performance Storage Model**
+
+#### **📊 New Data Architecture**
+- **User Document**: Contains ONLY the latest exam performance for fast access
+- **Subcollection**: Stores ALL historical performance data for trend analysis
+- **Automatic Migration**: Previous data moves to subcollection when new data is saved
+- **Submission Tracking**: Tracks number of performance submissions with `submissionCount`
+
+#### **🔄 Enhanced Save Process**
+**ExamPerformanceService.saveExamPerformance():**
+1. **Check Existing Data**: Reads current `exam_performance` from user document
+2. **Move to History**: Saves existing performance to subcollection with unique ID
+3. **Save New Data**: Updates user document with latest performance
+4. **Dual Storage**: Also saves new data to subcollection for immediate historical tracking
+5. **Metadata**: Adds timestamps and submission counters
+
+#### **📈 New Analytics Features**
+- **Performance Analytics**: Comprehensive analytics with trends and improvements
+- **Trend Calculation**: Automatic comparison between latest and previous performance
+- **Percentage Changes**: Shows improvement/decline percentages per subject
+- **Historical Tracking**: Complete performance history with unique IDs
+
+#### **🎨 Demo & Testing**
+- **PerformanceAnalyticsDemo**: Interactive demo widget showing data structure
+- **Visual Indicators**: Color-coded performance scores and trend indicators
+- **Test Functions**: Easy testing of save/retrieve operations
+- **Console Logging**: Detailed logging for debugging and verification
+
+### **📊 Data Structure Examples**
+
+#### **User Document (`users/{userId}`):**
+```json
+{
+  "exam_performance": {
+    "Mathematics": 85,
+    "Physics": 78,
+    "Chemistry": 82,
+    "total": 245,
+    "timestamp": "2024-12-19T10:30:00Z",
+    "submissionCount": 3
+  },
+  "subjectsLearning": ["Mathematics", "Physics", "Chemistry"],
+  "updatedAt": "2024-12-19T10:30:00Z"
+}
+```
+
+#### **Subcollection (`users/{userId}/exam_performance/{examId}`):**
+```json
+{
+  "Mathematics": 80,
+  "Physics": 75,
+  "Chemistry": 78,
+  "total": 233,
+  "timestamp": "2024-12-18T10:30:00Z",
+  "submissionCount": 2
+}
+```
+
+### **✅ Benefits**
+- **Fast Latest Access**: User document contains only current performance
+- **Complete History**: Subcollection preserves all historical data
+- **Trend Analysis**: Easy comparison between submissions
+- **Scalable**: No document size limits from historical data
+- **Analytics Ready**: Rich data structure for performance insights
+
+---
+
+## 2024-12-19 - Stream-Based Subject Filtering & Conditional Academic Setup
+
+### ✨ **Enhanced Subject Selection System**
+
+#### **🎯 Smart Academic Setup Display**
+- **Conditional Board Selection**: Academic setup (board/grade/stream selection) now only displays for users with 0 `subjectsLearning`
+- **Existing User Experience**: Users who already have selected subjects skip the board selection and go directly to subject management
+- **New User Flow**: First-time users see the full academic setup process
+- **Visual Indicators**: Dynamic headers show "Select Your Subjects" vs "Update Your Subjects" based on existing selection
+
+#### **📚 Stream-Based Subject Filtering**
+- **Enhanced JSON Structure**: Updated `indian_board_subjects_remote_config.json` with comprehensive subject lists for all boards
+- **Stream-Aware Filtering**: Grade 12 students see subjects filtered by their specific stream (Science, Commerce, Humanities, Arts)
+- **Board-Specific Categories**: Each board (CBSE, ICSE, ISC, State Boards, IB) shows its own subject structure
+- **Intelligent Categorization**: Subjects grouped by curriculum-appropriate categories (Languages, Core Subjects, Stream Subjects, etc.)
+
+#### **🔧 Service Layer Enhancements**
+**SubjectSelectionService:**
+- `getCategorizedSubjects()`: Now accepts `stream` parameter for precise filtering
+- `getAvailableSubjects()`: Enhanced with stream-based filtering for Grade 12
+- Stream normalization and matching logic
+- Fallback behavior for missing stream data
+
+#### **🎨 UI/UX Improvements**
+**SubjectSelectionWidget:**
+- Academic profile header shows board, grade, and stream information
+- Conditional display based on existing subject selection
+- Dynamic headers and descriptions for new vs existing users
+- Stream information display for Grade 12 students
+- "Change" button to modify academic setup if needed
+
+#### **🧪 Testing & Debugging**
+- **StreamSubjectDemo**: Interactive demo widget to test different board/grade/stream combinations
+- **Debug Logging**: Console logs track filtering decisions and data flow
+- **Visual Feedback**: Clear indicators for empty states and loading states
+
+### **📊 User Flow Examples**
+
+#### **New User (0 subjects):**
+1. Shows board selection widget
+2. User selects CBSE, Class 12, Science
+3. Shows subjects filtered for CBSE Science stream only
+4. User selects subjects and proceeds
+
+#### **Existing User (has subjects):**
+1. Skips board selection entirely
+2. Loads subjects based on existing assessment data
+3. Shows "Update Your Subjects" interface
+4. Academic profile header displays current configuration
+
+#### **Stream-Specific Filtering Examples:**
+- **CBSE Science**: Physics, Chemistry, Mathematics, Biology, Computer Science + Languages + Skill Subjects
+- **CBSE Commerce**: Accountancy, Business Studies, Economics + Languages + Skill Subjects  
+- **State Board Arts**: History, Political Science, Sociology, Geography + Languages + Vocational Subjects
+
+### **🔄 Technical Implementation**
+- Stream data read from `assessmentData['grade12Streams']`
+- Backwards compatible with existing users
+- Graceful fallback for missing board/grade/stream data
+- Maintains existing subject selection and performance tracking functionality
+
+### **✅ Quality Assurance**
+- Preserves all existing functionality
+- No breaking changes to data structure
+- Improved user experience for both new and returning users
+- More accurate curriculum alignment
+- Better performance through targeted subject loading
+
+---
+
+## 2025-01-21 - Progressive Profiling System Implementation - UPDATED
+
+### 🔧 Critical Fix: User Document Storage (2025-01-21 Update)
+
+**Fixed Data Storage Location**: Updated `SubjectSelectionService` to save selected subjects directly to the user document (`users/{uid}`) under the `subjectsLearning` field instead of the assessment document.
+
+**Changes**:
+- Modified `saveSelectedSubjects()` to use `update()` instead of `set()` to preserve other user fields
+- Integrated with `UserController` via GetX to update local state when saving
+- Modified `getSelectedSubjects()` to read from `UserController` first, then fallback to Firestore
+- Added proper imports for `FirebaseAuth`, `FirebaseFirestore`, and `UserController`
+- Ensures data follows the correct schema as specified in `user_profile_schema_firestore.json`
+- **CRITICAL**: Now uses `update()` instead of `set()` to prevent overwriting other user data
+
+## 2025-01-21 - Progressive Profiling System Implementation
+
+### 🎯 New Feature: Progressive Profiling System for Students
+
+**Overview**: Implemented a comprehensive progressive profiling system that allows students to:
+1. Select subjects based on their curriculum (grade, board, stream)
+2. Input exam performance marks using percentage sliders
+3. Track performance history and compare results over time
+
+### 📁 New Files Created:
+
+#### Services:
+- `career/lib/features/assessment/services/subject_selection_service.dart`
+  - Loads curriculum configuration from `indian_board_subjects_remote_config.json`
+  - Maps user's grade, board, and stream to available subjects
+  - Handles saving and retrieving selected subjects from user document
+
+- `career/lib/features/assessment/services/exam_performance_service.dart`
+  - Manages exam performance data storage
+  - Updates both user document and subcollection for historical tracking
+  - Provides performance comparison and trend analysis
+
+#### Widgets:
+- `career/lib/features/assessment/widgets/subject_selection_widget.dart`
+  - Curriculum-based subject selection with custom subject input
+  - Visual feedback for selected subjects
+  - Validation and error handling
+
+- `career/lib/features/assessment/widgets/exam_performance_input_widget.dart`
+  - Percentage sliders for each subject
+  - Real-time total and average calculation
+  - Color-coded performance indicators
+  - Performance summary cards
+
+#### Screens:
+- `career/lib/features/assessment/screens/progressive_profiling_screen.dart`
+  - Main orchestration screen with step-by-step progress
+  - Responsive design for web and mobile
+  - Progress indicators and navigation
+
+- `career/lib/features/assessment/screens/progressive_profiling_test_screen.dart`
+  - Test screen for verifying system functionality
+  - Debug information display
+  - Manual testing capabilities
+
+### 🔧 Configuration Updates:
+
+#### Assets:
+- Added `indian_board_subjects_remote_config.json` to `career/assets/`
+- Updated `career/pubspec.yaml` to include the new asset
+
+#### Navigation:
+- Added routes:
+  - `/progressive-profiling` - Main progressive profiling screen
+  - `/progressive-profiling-test` - Test screen for debugging
+
+#### Dependency Injection:
+- Registered `SubjectSelectionService` and `ExamPerformanceService` in `main.dart`
+
+### 🗄️ Data Structure:
+
+#### User Document Updates:
+```json
+{
+  "subjectsLearning": ["english", "math", "science", "socialStudies"],
+  "exam_performance": {
+    "exam_performance_id": {
+      "english": 75,
+      "math": 80,
+      "science": 85,
+      "socialStudies": 90,
+      "total": 330,
+      "timestamp": "2025-07-21T07:00:00Z"
+    }
+  }
+}
+```
+
+#### Subcollection Structure:
+```
+users/{userId}/exam_performance/{performanceId}
+{
+  "english": 75,
+  "math": 80,
+  "science": 85,
+  "socialStudies": 90,
+  "total": 330,
+  "timestamp": "2025-07-21T07:00:00Z"
+}
+```
+
+### 🎨 UI/UX Features:
+
+#### Subject Selection:
+- Curriculum-based subject options (CBSE, ICSE, State Boards, IB)
+- Custom subject input for regional languages
+- Visual chips for selected subjects
+- Validation and error handling
+
+#### Exam Performance Input:
+- Percentage sliders (0-100%) for each subject
+- Real-time total and average calculation
+- Color-coded performance indicators:
+  - Green: 90%+
+  - Teal: 80-89%
+  - Gold: 70-79%
+  - Orange: 60-69%
+  - Red: <60%
+
+#### Progress Tracking:
+- Step-by-step progress indicators
+- Visual completion status
+- Responsive design for web and mobile
+
+### 🔄 Workflow:
+
+#### Step 1: Subject Selection
+1. Check if user has existing subjects
+2. Load curriculum-based subjects based on grade/board/stream
+3. Allow custom subject addition
+4. Save to `subjectsLearning` field in user document
+
+#### Step 2: Performance Input
+1. Display sliders for each selected subject
+2. Calculate real-time totals and averages
+3. Save to both user document and subcollection
+4. Generate unique performance ID for tracking
+
+### 🧪 Testing:
+- Created comprehensive test screen
+- Manual testing capabilities for subject selection and performance input
+- Debug information display
+- Error handling and validation testing
+
+### 📱 Platform Support:
+- Responsive design for web and mobile
+- Platform-specific navigation handling
+- Consistent theming using design system colors
+- Accessibility considerations
+
+### 🔒 Security:
+- User authentication required
+- Firestore security rules compliance
+- Data validation and sanitization
+
+### 📊 Analytics:
+- Navigation tracking for progressive profiling screens
+- Performance submission tracking
+- Error tracking and reporting
+
+---
+
+**Next Steps**:
+1. Integration with existing assessment flow
+2. Performance history visualization
+3. Performance comparison charts
+4. Integration with career recommendation system
+5. Mobile app testing and optimization 
