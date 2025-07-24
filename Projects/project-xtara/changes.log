@@ -1,5 +1,28 @@
 # Changes Log - Project Xtara
 
+## 2025-01-27 - Enhanced ingestCuratedResources Function with Date Field Conversion
+
+### Enhanced ingestCuratedResources function with automatic date field conversion
+- Added `convertDateFieldsToTimestamps()` helper function to automatically convert date fields to Firestore timestamps
+- Supports multiple date field formats: ISO strings, Date objects, timestamp numbers
+- Handles common date fields: created_at, updated_at, ingested_at, published_date, publish_until, etc.
+- Updated `ingestCuratedResources`, `curateContent`, and `ingestCareerClusters` functions to use date conversion
+- Ensures consistent timestamp handling across all ingestion functions
+- Prevents date format inconsistencies in Firestore documents
+
+### Technical Implementation
+- **Date Field Support**: created_at, updated_at, ingested_at, published_date, publish_until, createdAt, updatedAt, publishedDate, publishUntil, date, published_at, archived_at
+- **Format Conversion**: 
+  - ISO string dates → Firestore Timestamp
+  - JavaScript Date objects → Firestore Timestamp  
+  - Timestamp numbers → Firestore Timestamp
+  - Existing Firestore timestamps → preserved as-is
+- **Error Handling**: Graceful handling of invalid date formats
+- **Batch Processing**: Efficient conversion for multiple resources
+- **Consistency**: All ingestion functions now use the same date conversion logic
+
+---
+
 ## 2025-01-XX - Privacy Policy & Terms of Use Implementation
 
 ### Added
