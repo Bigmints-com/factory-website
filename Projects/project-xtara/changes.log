@@ -1,4 +1,60 @@
-# Changes Log
+# Changes Log - Project Xtara
+
+## 2025-01-XX - Privacy Policy & Terms of Use Implementation
+
+### Added
+- **Privacy Policy Documentation**: Created comprehensive privacy policy for Xtara app
+  - `career/PRIVACY_POLICY.md` - Complete privacy policy document
+  - `career/lib/features/profile/screens/privacy_policy_screen.dart` - In-app privacy policy screen
+- **Terms of Use Documentation**: Created comprehensive terms of use for Xtara app
+  - `career/TERMS_OF_USE.md` - Complete terms of use document
+  - `career/lib/features/profile/screens/terms_of_use_screen.dart` - In-app terms of use screen
+- **Legal Documentation Features**:
+  - Comprehensive data collection and usage information
+  - User rights and privacy controls
+  - Data security and retention policies
+  - Contact information and legal compliance
+  - Support for GDPR, CCPA, and India DPDPA
+  - Responsive design with table of contents
+  - Analytics tracking integration
+  - User eligibility and acceptable use policies
+  - Intellectual property and liability limitations
+  - Termination and dispute resolution procedures
+
+### Updated
+- **Main App Routes**: Added `/privacy-policy` and `/terms-of-use` routes with authentication guards
+- **About Screen**: Added links to both Privacy Policy and Terms of Use
+- **Navigation**: Integrated legal screens with proper navigation
+
+### Technical Details
+- **Privacy Policy Coverage**:
+  - Personal information collection (account, demographic, educational, academic performance)
+  - Assessment data (personality, interests, career aspirations)
+  - Usage data (device info, analytics, performance metrics)
+  - Location data (state, district, city for regional recommendations)
+  - Data storage (Firebase Firestore, Google Cloud Platform)
+  - Security measures (encryption, access controls, audits)
+  - User rights (access, update, delete, portability, opt-out)
+  - Third-party services (Firebase, Google Cloud, Vertex AI)
+  - Legal compliance (GDPR, CCPA, India DPDPA)
+
+- **UI/UX Features**:
+  - Responsive design (large web and mobile layouts)
+  - Table of contents with navigation
+  - Card-based layout using BaseCard components
+  - Theme-compliant styling
+  - Analytics tracking for screen views
+  - Proper navigation with PlatformAppBar
+
+### Compliance
+- **GDPR Compliance**: Right to access, rectification, erasure, portability
+- **CCPA Compliance**: Right to know, delete, opt-out, non-discrimination
+- **India DPDPA**: Right to information, correction, erasure, grievance redressal
+- **Children's Privacy**: COPPA compliance for users under 13
+- **Data Breach Notification**: 72-hour notification requirement
+- **International Transfers**: Standard contractual clauses and adequacy decisions
+
+---
 
 ## 2024-12-19 - Profile Screen Academic Links & Split Subject/Performance Screens
 
@@ -670,3 +726,235 @@ users/{userId}/exam_performance/{performanceId}
 3. Performance comparison charts
 4. Integration with career recommendation system
 5. Mobile app testing and optimization 
+
+## 2024-12-19 - Standardized Status Field Across All Collections
+
+### Universal Content List Screen
+- **Removed `isPublished` field dependency**: All collections now use the standardized `status` field
+- **Updated status calculation methods**: 
+  - `_isDocumentPublished()`: Now only checks `status == 'published'`
+  - `_getStatusText()`: Standardized to handle 'published', 'draft', 'archived' statuses
+  - `_getStatusIcon()`: Consistent icons for all status types
+  - `_getStatusColor()`: Consistent colors for all status types
+- **Simplified toggle publish logic**: Now only updates the `status` field
+- **Removed collection-specific logic**: No longer different handling for `career_cluster_resources`
+
+### GoodRead Model
+- **Removed `isPublished` field**: Model now only uses the `status` field
+- **Updated constructor**: Removed `isPublished` parameter
+- **Updated serialization**: Removed `isPublished` from `toMap()` method
+- **Simplified publish logic**: 
+  - `isCurrentlyPublished()`: Now only checks `status == 'published'`
+  - `isPublishedForAdmin()`: Now only checks `status == 'published'`
+
+### Impact
+- **Consistency**: All collections now use the same status field structure
+- **Maintainability**: Simplified code with single source of truth for publish status
+- **Future-proof**: Easier to add new status types (like 'archived', 'reviewed', etc.)
+- **Database cleanup**: Can now safely remove `isPublished` fields from Firestore documents
+
+### Migration Notes
+- Existing documents with `isPublished: true` should be updated to `status: 'published'`
+- Existing documents with `isPublished: false` should be updated to `status: 'draft'`
+- The `isPublished` field can be safely removed from all Firestore collections
+
+### Service Optimizations
+- **GoodRead Service**: Removed redundant `isCurrentlyPublished()` checks since Firestore queries already filter by `status == 'published'`
+- **Story Service**: Removed redundant `isPublished()` checks since Firestore queries already filter by `status == 'published'`
+- **Challenge Service**: Removed redundant `isPublished()` checks since Firestore queries already filter by `status == 'published'`
+- **Performance improvement**: Eliminated double-checking of publish status (once in query, once in code)
+- **Simplified logic**: Services now rely on Firestore query filtering for status checks
+
+### Filter System Fixes
+- **Fixed filter options update**: Filter options now update when changing filter field
+- **Improved default filter field**: Prefers 'status' field as default filter when available
+- **Fixed clear filters**: Clear filters now properly resets filter options
+- **Added debug logging**: Added logging to track filter field and value changes
+- **Better field mapping**: Filter dropdown now properly maps to available fields
+
+### Full-Screen Filter Modal
+- **Replaced inline filter panel**: Now uses a full-screen modal bottom sheet
+- **Modern UI design**: Clean, organized sections with icons and proper spacing
+- **Multiple filter types**: Status, field-based, and date range filters
+- **Interactive chips**: FilterChip components for easy selection
+- **Smart field selection**: Dynamic field options with value preview
+- **Clear all functionality**: One-tap clear all filters
+- **Apply filters**: Shows document count and applies filters on tap
+- **Responsive design**: Works on both mobile and tablet layouts
+
+## 2024-12-19 - Server-Side Filtering & Indexing System
+
+### Major Performance Improvements
+- **Server-side filtering**: All filtering now happens on Firestore server, not client-side
+- **Proper pagination**: Pagination works with filtered results, not just fetched documents
+- **Accurate counts**: Total document counts reflect actual filtered results
+- **Firestore indexes**: Created comprehensive indexes for optimal query performance
+
+### New Features
+- **Date range filtering**: Server-side filtering by today, week, month, year
+- **Array field filtering**: Support for `array-contains` queries on careerRelevance and types fields
+- **Combined filtering**: Support for multiple filter types (status + date, field + date, etc.)
+- **Real-time count updates**: Accurate document counts that update with filters
+
+### Technical Architecture
+- **Enhanced UniversalContentService**: Updated to support server-side filtering and date ranges
+- **Index-based queries**: All queries now use Firestore indexes for optimal performance
+- **Proper error handling**: Better error messages for missing indexes and query issues
+- **Debug logging**: Comprehensive logging for query debugging and performance monitoring
+
+### Firestore Indexes Created
+- **career_cluster_resources**: status + updated_at, cluster_name + updated_at, types + updated_at
+- **stories**: status + updatedAt, domain + updatedAt, careerRelevance + updatedAt
+- **challenges**: status + updatedAt, domain + updatedAt, careerRelevance + updatedAt
+- **good_reads**: status + updatedAt, domain + updatedAt, careerRelevance + updatedAt
+- **dream_careers**: status + updatedAt
+
+### Files Added
+- `career/lib/features/admin/universal/firestore_indexes.json` - Complete index configuration
+- `career/lib/features/admin/universal/deploy_indexes.sh` - Automated index deployment script
+- `career/lib/features/admin/universal/README_FILTERING.md` - Comprehensive documentation
+
+### Files Modified
+- `career/lib/features/admin/universal/universal_content_service.dart`
+  - Updated `getDocumentsWithPagination()` to support server-side filtering and date ranges
+  - Updated `getDocumentCount()` to support filtered counts
+  - Added proper error handling and debug logging
+  - Enhanced query building with multiple filter support
+
+- `career/lib/features/admin/universal/universal_content_list_screen.dart`
+  - Updated to pass date filter to service calls
+  - Updated to use filtered document counts
+  - Enhanced filter application logic
+  - Improved pagination with filtered results
+
+### Deployment Instructions
+1. **Deploy indexes**: Run `./deploy_indexes.sh` from the universal directory
+2. **Wait for index building**: Indexes take 2-5 minutes to build
+3. **Test filtering**: Verify all filter combinations work correctly
+4. **Monitor performance**: Check Firebase Console for query performance
+
+### Performance Benefits
+- **Reduced client-side processing**: No more filtering large datasets on device
+- **Faster response times**: Server-side filtering is much more efficient
+- **Better scalability**: Handles large collections without performance degradation
+- **Accurate pagination**: Proper handling of filtered result sets
+- **Reduced data transfer**: Only fetches filtered results, not entire collections
+
+## 2024-12-19 - Fixed Toggle Button State Management
+
+### Bug Fixes
+- **Fixed toggle button responsiveness**: Toggle buttons now update properly when clicked
+- **Per-document saving state**: Each document now has its own saving state instead of global state
+- **Proper UI updates**: Both main documents list and filtered documents list are updated when status changes
+- **Fixed button disabling**: Only the specific button being clicked is disabled, not all buttons
+
+### Technical Changes
+- **Added `_savingDocumentIds` Set**: Tracks which documents are currently being saved
+- **Updated `_togglePublishStatus` method**: 
+  - Removed unnecessary `_selectedDocument` null check
+  - Added per-document saving state management
+  - Updated both `_documents` and `_filteredDocuments` lists
+  - Fixed proper error handling and state cleanup
+- **Updated button implementation**: 
+  - Uses `_savingDocumentIds.contains(doc['id'])` for individual button states
+  - Proper loading states and disabled states per document
+
+### Root Cause
+The issue was caused by:
+1. **Global saving state**: `_isSaving` was shared across all buttons, causing all buttons to be disabled when one was saving
+2. **Missing filtered list updates**: Only the main documents list was being updated, not the filtered list used for display
+3. **Unnecessary null check**: The method was checking if `_selectedDocument` was null, preventing toggle operations when no document was selected in details panel
+
+### Impact
+- **Better UX**: Users can now toggle multiple documents without interference
+- **Visual feedback**: Each button shows proper loading state
+- **Consistent updates**: UI updates immediately reflect status changes
+- **Improved performance**: No unnecessary global state updates
+
+## 2024-12-19 - Fixed Filter Chip State Management
+
+### Bug Fixes
+- **Fixed filter chip responsiveness**: Filter chips now update their visual state when clicked
+- **Modal state management**: Filter modal now properly rebuilds when chip states change
+- **Real-time chip feedback**: Selected chips now show proper visual feedback immediately
+
+### Technical Changes
+- **Added StatefulBuilder**: Wrapped modal content in StatefulBuilder to enable state updates
+- **Updated filter methods**: All filter methods now accept `StateSetter setModalState` parameter
+- **Replaced setState with setModalState**: All state updates within modal now use `setModalState`
+- **Fixed modal rebuilds**: Modal content now rebuilds when filter states change
+
+### Methods Updated
+- `_buildFilterModal()`: Now accepts `StateSetter setModalState` parameter
+- `_buildStatusFilter()`: Uses `setModalState` for status chip updates
+- `_buildFieldFilter()`: Uses `setModalState` for field filter updates
+- `_buildDateFilter()`: Uses `setModalState` for date filter updates
+- `_clearAllFilters()`: Uses `setModalState` for clearing filters
+- `_showAllFilterOptions()`: Uses `setModalState` for option selection
+
+### Root Cause
+The issue was that the modal content was built once and didn't rebuild when the state changed. The `setState()` calls inside the `onSelected` callbacks were not triggering a rebuild of the modal content because the modal was not a stateful widget.
+
+### Solution
+Used `StatefulBuilder` to wrap the modal content, allowing the modal to rebuild its content when the state changes. All `setState()` calls within the modal were replaced with `setModalState()` to trigger proper rebuilds.
+
+### Impact
+- **Better UX**: Users now see immediate visual feedback when clicking filter chips
+- **Consistent behavior**: Filter chips behave like proper interactive elements
+- **Real-time updates**: Modal content updates immediately when filters change
+- **Professional feel**: Filter interface now feels responsive and polished
+
+## 2024-12-19 - Real-Time Filter Count Updates
+
+### New Features
+- **Real-time count updates**: Filter count now updates immediately when filters are selected
+- **Dynamic apply button**: Apply button shows live count of documents that match current filters
+- **Accurate filtering feedback**: Users can see exactly how many documents will be shown before applying filters
+
+### Technical Changes
+- **Added `_getRealTimeFilteredCount()` method**: Fetches count for current filter selections from server
+- **Updated modal apply button**: Now uses FutureBuilder to show real-time count
+- **Added ValueKey to FutureBuilder**: Forces rebuild when filter state changes
+- **Enhanced debug logging**: Added logging to track real-time count fetching
+
+### Implementation Details
+- **FutureBuilder with ValueKey**: Ensures count updates when any filter changes
+- **Server-side count fetching**: Uses existing `getDocumentCount()` method with current filters
+- **Fallback handling**: Falls back to current total count if real-time fetch fails
+- **Performance optimized**: Only fetches count when needed, not on every rebuild
+
+### User Experience
+- **Immediate feedback**: Users see count change as soon as they select filters
+- **Informed decisions**: Users know exactly how many documents will be shown
+- **Better UX**: No surprises when applying filters - count is accurate
+- **Professional interface**: Real-time updates make the interface feel responsive
+
+### Debug Information
+Added comprehensive logging to track:
+- Filter parameters being used for count
+- Real-time count results
+- Error handling for count fetching
+
+## 2024-12-19 - Implemented BaseCard listGroup in Universal Content Manager
+
+### UI Improvements
+- **Fixed BaseCard implementation**: Properly implemented `listGroup` parameter in Universal Content Manager
+- **Clean list structure**: Collections now display in a proper card list format
+- **Consistent styling**: Uses the standardized BaseCard component for consistent UI
+
+### Technical Changes
+- **Fixed syntax error**: Removed double comma and corrected BaseCard structure
+- **Proper listGroup usage**: Converted ListView.builder to List<Widget> for BaseCard compatibility
+- **Clean code structure**: Improved readability and maintainability
+
+### Implementation Details
+- **BaseCard listGroup**: Collections are now displayed using the `listGroup` parameter
+- **Proper widget mapping**: Uses `_collections.map()` to create list of collection cards
+- **Consistent padding**: Each collection card has proper bottom padding for spacing
+- **Error-free implementation**: Fixed all syntax and type errors
+
+### Benefits
+- **Better UX**: Collections display in a clean, organized card list
+- **Consistent design**: Uses the same card component as other parts of the app
+- **Maintainable code**: Follows established patterns and component structure
+- **Professional appearance**: Clean, modern card-based layout 

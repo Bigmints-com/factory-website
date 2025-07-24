@@ -140,3 +140,53 @@ After the user has selected the subjects, we need to add a new field to the user
 But when resubmitting the form, we need to update the exam_performance field, but also add it a subcollection called "exam_performance" with a new id for comparing the previous and new values.
 
 
+
+{
+    [
+        "india":{
+            "name": "India",
+            "telephone_code": "+91",
+            "currency": "INR",
+            "currency_symbol": "₹",
+            "currency_code": "INR",
+            "currency_symbol": "₹",
+            "states": [
+                {
+                    "name": "Kerala",
+                    "languages": [
+                        "Malayalam",
+                        "English"
+                    ],
+                    "districts": [
+                        "Ernakulam",
+                        "Kollam",
+                        "Kottayam",
+                        "Kozhikode",
+                        "Malappuram",
+                        "Palakkad",
+                        "Pathanamthitta",
+                        "Thiruvananthapuram",
+                        "Thrissur",
+                        "Wayanad",
+                        "Idukki",
+                        "Kannur",
+                        "Kasaragod",
+                        "Kozhikode",
+                        "Malappuram",
+                        "Palakkad",
+                        "Pathanamthitta",
+                        "Thiruvananthapuram",
+                        "Thrissur",
+                        "Wayanad",
+                    ],
+                },
+                {
+                    "name": "Tamil Nadu",
+                    "languages": [
+                        "Tamil",
+                        "English"
+                    ],
+                }
+        }
+    ]
+}
