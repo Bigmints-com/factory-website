@@ -190,3 +190,49 @@ But when resubmitting the form, we need to update the exam_performance field, bu
         }
     ]
 }
+
+
+
+
+_____________________________________________________________
+
+
+
+
+I want to build a framework to calculate and display a user's progress towards achieving their career goals.
+
+As of today, this should be calculated based on the following data:
+
+ - Number of challenges completed and points earned
+ - Number of good reads completed
+ - Number of stories watched 
+
+The users should have weekly goals achieved.
+
+We should also have lifetime goals achieved.
+
+The goals will be defined by the admin as a remote configuration.
+
+Read the rules and Start with building the framework to calculate the progress in a standard format. This data should be saved under the users profile as a subcollection called "career_goals".
+
+After this impmentation is successful, we should focus on the follwing:
+
+- we should also have a leaderboard to display the top 10 users based on the points earned.
+
+- I also want to build a steaks framework with bonus points for the users who achieve their goals. For Eg read 5 stories, take 5 challenges, take 5 good reads, etc in one week and get 10% bonus points.
+
+- The user should be able to see their progress towards achieving their goals.
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
