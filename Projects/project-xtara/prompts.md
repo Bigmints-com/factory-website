@@ -225,10 +225,16 @@ After this impmentation is successful, we should focus on the follwing:
 
 
 
+_____________________________________________________________
+
+ I also want to make an extension  to the contentCurator function. Let's call it curateContentFromUrl.
+
+ We should allow the user to input a url and the function will fetch the content from the url, categorize it based on cluster_mappings and save it in the firestore collection "career_cluster_resources" following the current structure. The user can optionally enter a career cluster name, or any other fields from cluster_mappings which will be used to categorize the content.
+
+
 
 
  
-
 
 
 
