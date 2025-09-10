@@ -1,0 +1,327 @@
+/* Native macOS Dark Theme for PySide Browser */
+
+/* Main Window - Dark Mode */
+QMainWindow {
+    background-color: #1a1a1a;
+    color: #ffffff;
+    font-family: "SF Pro Display", "Helvetica Neue", "Arial", sans-serif;
+}
+
+/* Toolbar Styling - Dark Mode */
+QToolBar {
+    background-color: #2d2d2d;
+    border: none;
+    border-bottom: 1px solid #404040;
+    padding: 6px 8px;
+    spacing: 6px;
+}
+
+QToolBar::separator {
+    background-color: #404040;
+    width: 1px;
+    margin: 4px 8px;
+}
+
+/* Action Buttons - Dark Mode */
+QAction {
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    padding: 6px 8px;
+    margin: 2px;
+    color: #cccccc;
+    font-size: 18px;
+    font-weight: 400;
+    min-width: 36px;
+    min-height: 36px;
+}
+
+QAction:hover {
+    background-color: #404040;
+    color: #ffffff;
+}
+
+QAction:pressed {
+    background-color: #007AFF;
+    color: #ffffff;
+}
+
+QAction:disabled {
+    color: #666666;
+}
+
+/* Address Bar - Dark Mode */
+QLineEdit {
+    background-color: #3a3a3a;
+    border: 2px solid #555555;
+    border-radius: 20px;
+    padding: 10px 20px;
+    font-size: 15px;
+    color: #ffffff;
+    selection-background-color: #007AFF;
+    selection-color: white;
+    font-weight: 400;
+}
+
+QLineEdit:focus {
+    border-color: #007AFF;
+    background-color: #4a4a4a;
+}
+
+QLineEdit::placeholder {
+    color: #888888;
+    font-style: normal;
+}
+
+/* Navigation Buttons - Dark Mode */
+QPushButton {
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    padding: 8px;
+    color: #cccccc;
+    font-size: 18px;
+    font-weight: 400;
+    min-width: 36px;
+    min-height: 36px;
+}
+
+QPushButton:hover {
+    background-color: #404040;
+    color: #ffffff;
+}
+
+QPushButton:pressed {
+    background-color: #007AFF;
+    color: #ffffff;
+}
+
+QPushButton:disabled {
+    color: #666666;
+    background-color: transparent;
+}
+
+/* Status Bar - Dark Mode */
+QStatusBar {
+    background-color: #2d2d2d;
+    border-top: 1px solid #404040;
+    color: #cccccc;
+    font-size: 12px;
+    padding: 4px 8px;
+}
+
+QProgressBar {
+    border: 1px solid #555555;
+    border-radius: 4px;
+    background-color: #3a3a3a;
+    text-align: center;
+    color: #cccccc;
+    font-size: 11px;
+}
+
+QProgressBar::chunk {
+    background-color: #007AFF;
+    border-radius: 3px;
+}
+
+/* Dock Widget - Dark Mode */
+QDockWidget {
+    background-color: #1a1a1a;
+    border: 1px solid #404040;
+    titlebar-close-icon: none;
+    titlebar-normal-icon: none;
+}
+
+QDockWidget::title {
+    background-color: #2d2d2d;
+    border-bottom: 1px solid #404040;
+    padding: 8px 12px;
+    font-weight: 500;
+    color: #ffffff;
+}
+
+/* Sidebar - Dark Mode */
+QWidget#sidebar {
+    background-color: #1a1a1a;
+    border-left: 1px solid #404040;
+}
+
+/* Chat Panel - Dark Mode */
+QTextEdit {
+    background-color: #1a1a1a;
+    border: 1px solid #404040;
+    border-radius: 8px;
+    padding: 12px;
+    font-family: "SF Pro Display", "Helvetica Neue", "Arial", sans-serif;
+    font-size: 13px;
+    line-height: 1.4;
+    color: #ffffff;
+    selection-background-color: #007AFF;
+    selection-color: white;
+}
+
+QTextEdit:focus {
+    border-color: #007AFF;
+}
+
+/* Chat Input - macOS Dark */
+QLineEdit#chatInput {
+    background-color: #3a3a3a;
+    border: 1px solid #555555;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 13px;
+    color: #ffffff;
+}
+
+QLineEdit#chatInput:focus {
+    border-color: #007AFF;
+}
+
+/* ComboBox - macOS Dark */
+QComboBox {
+    background-color: #3a3a3a;
+    border: 1px solid #555555;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 13px;
+    color: #ffffff;
+    min-width: 120px;
+}
+
+QComboBox:hover {
+    border-color: #007AFF;
+}
+
+QComboBox::drop-down {
+    border: none;
+    width: 20px;
+}
+
+QComboBox::down-arrow {
+    image: none;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 4px solid #cccccc;
+    margin-right: 8px;
+}
+
+QComboBox QAbstractItemView {
+    background-color: #2d2d2d;
+    border: 1px solid #404040;
+    border-radius: 6px;
+    selection-background-color: #007AFF;
+    selection-color: #ffffff;
+    padding: 4px;
+}
+
+/* List Widget - macOS Dark */
+QListWidget {
+    background-color: #2d2d2d;
+    border: 1px solid #404040;
+    border-radius: 8px;
+    padding: 4px;
+    font-size: 13px;
+    color: #ffffff;
+    selection-background-color: #007AFF;
+    selection-color: #ffffff;
+}
+
+QListWidget::item {
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin: 2px;
+}
+
+QListWidget::item:hover {
+    background-color: #404040;
+}
+
+QListWidget::item:selected {
+    background-color: #007AFF;
+    color: #ffffff;
+}
+
+/* Dialog Styling - macOS Dark */
+QDialog {
+    background-color: #2d2d2d;
+    border: 1px solid #404040;
+    border-radius: 8px;
+}
+
+QGroupBox {
+    font-weight: 500;
+    color: #ffffff;
+    border: 1px solid #404040;
+    border-radius: 6px;
+    margin-top: 8px;
+    padding-top: 8px;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    left: 8px;
+    padding: 0 8px 0 8px;
+    background-color: #2d2d2d;
+}
+
+/* Form Layout */
+QFormLayout {
+    spacing: 12px;
+}
+
+QLabel {
+    color: #ffffff;
+    font-size: 13px;
+}
+
+/* Scroll Areas - macOS Dark */
+QScrollArea {
+    background-color: #2d2d2d;
+    border: 1px solid #404040;
+    border-radius: 6px;
+}
+
+QScrollBar:vertical {
+    background-color: #3a3a3a;
+    width: 12px;
+    border-radius: 6px;
+    margin: 0;
+}
+
+QScrollBar::handle:vertical {
+    background-color: #555555;
+    border-radius: 6px;
+    min-height: 20px;
+    margin: 2px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background-color: #777777;
+}
+
+QScrollBar::add-line:vertical,
+QScrollBar::sub-line:vertical {
+    height: 0px;
+}
+
+/* Tool Status Pill - macOS Dark */
+QLabel#toolStatus {
+    background-color: #30D158;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+/* macOS Dark Colors */
+/* Primary: #007AFF (macOS Blue) */
+/* Secondary: #30D158 (macOS Green) */
+/* Warning: #FF9F0A (macOS Orange) */
+/* Error: #FF453A (macOS Red) */
+/* Background: #1e1e1e (Dark) */
+/* Surface: #2d2d2d (Darker) */
+/* Border: #404040 (Dark Gray) */
+/* Text: #ffffff (White) */
+/* Text Secondary: #cccccc (Light Gray) */

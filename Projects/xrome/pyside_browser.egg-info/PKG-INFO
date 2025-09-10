@@ -1,0 +1,7 @@
+Metadata-Version: 2.4
+Name: pyside-browser
+Version: 0.1.0
+Requires-Dist: PySide6
+Requires-Dist: httpx>=0.27
+Requires-Dist: playwright>=1.46
+Requires-Dist: sqlmodel>=0.0.16
