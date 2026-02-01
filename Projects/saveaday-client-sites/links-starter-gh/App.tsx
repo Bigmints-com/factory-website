@@ -295,23 +295,22 @@ const ProfilePage: React.FC = () => {
         )}
 
         {/* Footer */}
-        <footer className="mt-20 text-center pb-8">
+        <footer className="mt-20 text-center pb-8 space-y-4">
           <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold opacity-60">
             © 2026 {profile.name}
           </p>
+          
+          <a
+            href="https://saveaday.ai"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-indigo-600 transition-colors opacity-80 hover:opacity-100"
+          >
+            <Info className="w-3.5 h-3.5" />
+            <span>Powered by Saveaday</span>
+          </a>
         </footer>
       </div>
-
-      {/* Info Button */}
-      <a 
-        href="https://saveaday.ai" 
-        target="_blank" 
-        rel="noopener noreferrer"
-        className="fixed bottom-6 right-6 p-3 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-full shadow-lg hover:shadow-xl hover:scale-110 transition-all group z-50"
-        title="Powered by SaveADay"
-      >
-        <Info className="w-5 h-5 text-indigo-600 group-hover:text-indigo-700" />
-      </a>
 
       {/* Timings Modal */}
       {profile.businessHours && (
