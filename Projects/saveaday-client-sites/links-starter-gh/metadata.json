@@ -1,0 +1,5 @@
+{
+  "name": "LinkPulse - High Performance Link Pages",
+  "description": "A beautiful, lightning-fast link-in-bio application built with React, Tailwind, and Framer Motion. Powered by the Gemini API for smart content insights.",
+  "requestFramePermissions": []
+}

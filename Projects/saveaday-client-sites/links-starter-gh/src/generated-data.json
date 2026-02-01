@@ -1,0 +1,76 @@
+{
+    "linkPage": {
+        "id": "8JeIMaXKpX7QPAgtXj2e",
+        "ownerId": "x0P8bcooVLMknfD0FL86KcxOsMH3",
+        "slug": "saveaday",
+        "status": "active",
+        "createdAt": "2026-01-21T11:16:27.236Z",
+        "views": 0,
+        "clicks": 0,
+        "profile": {
+            "name": "Saveaday",
+            "bio": "Saveaday helps business to save a day every week automating repetitive and boring tasks",
+            "logo": "https://img.freepik.com/free-vector/bird-colorful-gradient-design-vector_343694-2506.jpg?semt=ais_hybrid&w=740&q=80",
+            "address": "Dubai",
+            "email": "me@bigmints.com",
+            "phone": "+971569737344"
+        },
+        "links": [
+            {
+                "id": "-6Kl-m-qNWomTPoRQfXa6",
+                "type": "social",
+                "label": "Instagram",
+                "url": "https://instagram.com/saveaday",
+                "order": 0,
+                "active": true,
+                "icon": "instagram"
+            },
+            {
+                "id": "Zf4qEKs41bFSJrRXfy6a6",
+                "type": "social",
+                "label": "Facebook",
+                "url": "https://facebook.com/saveaday",
+                "order": 1,
+                "active": true,
+                "icon": "facebook"
+            }
+        ],
+        "theme": {
+            "background": "bg-gray-50",
+            "buttonStyle": "pill",
+            "font": "sans"
+        },
+        "updatedAt": "2026-01-21T11:19:17.120Z"
+    },
+    "catalogue": {
+        "id": "VzB8iwGnFV40SeRXOH0p",
+        "ownerId": "x0P8bcooVLMknfD0FL86KcxOsMH3",
+        "businessName": "Saveaday Services",
+        "slug": "saveaday-services",
+        "status": "active",
+        "theme": {
+            "primaryColor": "#000000",
+            "font": "sans"
+        },
+        "createdAt": {
+            "_seconds": 1769001099,
+            "_nanoseconds": 177000000
+        },
+        "categories": [
+            {
+                "title": "Consulting Services",
+                "items": [
+                    {
+                        "title": "Business Automation Consultation",
+                        "description": "Expert consultation on automating your business processes",
+                        "price": 500
+                    }
+                ]
+            }
+        ],
+        "updatedAt": {
+            "_seconds": 1769515782,
+            "_nanoseconds": 19000000
+        }
+    }
+}
