@@ -1,0 +1,116 @@
+import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:get/get.dart';
+import 'note_detail_controller.dart';
+import 'widgets/detail_audio_player.dart';
+import 'widgets/detail_content.dart';
+
+class MobileNoteDetail extends StatelessWidget {
+  const MobileNoteDetail({super.key, required this.controller, this.onClose});
+
+  final NoteDetailController controller;
+  final VoidCallback? onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Hero(
+      tag: 'note-${controller.note.id}',
+      child: Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          surfaceTintColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: const FaIcon(FontAwesomeIcons.xmark, size: 20),
+            onPressed: () {
+              if (onClose != null) {
+                onClose!();
+              } else {
+                Navigator.of(context).pop();
+              }
+            },
+          ),
+          actions: [
+            IconButton(
+              icon: FaIcon(
+                FontAwesomeIcons.trash,
+                size: 18,
+                color: theme.colorScheme.error,
+              ),
+              onPressed: () async {
+                final confirmed = await _showDeleteDialog(context);
+                if (confirmed == true) {
+                  await controller.deleteNote();
+                  if (context.mounted) {
+                    if (onClose != null) {
+                      onClose!();
+                    } else {
+                      Navigator.of(context).pop();
+                    }
+                  }
+                }
+              },
+            ),
+            const SizedBox(width: 8),
+          ],
+        ),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                DetailContent(controller: controller),
+                const SizedBox(height: 32),
+                DetailAudioPlayer(controller: controller),
+                const SizedBox(height: 32),
+                Obx(() {
+                  if (!controller.isEditing.value) {
+                    return const SizedBox.shrink();
+                  }
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 40, bottom: 40),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: controller.saveEdit,
+                        child: const Text('Save Changes'),
+                      ),
+                    ),
+                  );
+                }),
+                const SizedBox(height: 24),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<bool?> _showDeleteDialog(BuildContext context) {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Note'),
+        content: const Text('Are you sure you want to delete this note?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+}
