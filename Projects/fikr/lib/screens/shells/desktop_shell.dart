@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:flutter_feather_icons/flutter_feather_icons.dart';
 import 'package:get/get.dart';
 import '../../controllers/app_controller.dart';
 import '../../controllers/record_controller.dart';
@@ -53,7 +53,7 @@ class DesktopShell extends StatelessWidget {
             children: [
               _DesktopTopBar(
                 title: title,
-                showSettings: index != 2,
+                showSettings: index != 3,
                 onSettings: onSettings,
                 isSearching: isSearching,
                 searchQuery: searchQuery,
@@ -69,8 +69,8 @@ class DesktopShell extends StatelessWidget {
                               NoteDetailScreen.show(context, note);
                             }
                           },
-                          icon: const FaIcon(
-                            FontAwesomeIcons.penToSquare,
+                          icon: const Icon(
+                            FeatherIcons.edit2,
                             size: 18,
                           ),
                           tooltip: 'New Note',
@@ -85,10 +85,10 @@ class DesktopShell extends StatelessWidget {
                             children: [
                               IconButton(
                                 onPressed: onSearchToggle,
-                                icon: FaIcon(
+                                icon: Icon(
                                   isSearching
-                                      ? FontAwesomeIcons.xmark
-                                      : FontAwesomeIcons.magnifyingGlass,
+                                      ? FeatherIcons.x
+                                      : FeatherIcons.search,
                                   size: 18,
                                 ),
                                 tooltip: isSearching
@@ -97,10 +97,10 @@ class DesktopShell extends StatelessWidget {
                               ),
                               IconButton(
                                 onPressed: onToggleFilters,
-                                icon: FaIcon(
+                                icon: Icon(
                                   showFilters
-                                      ? FontAwesomeIcons.arrowUpWideShort
-                                      : FontAwesomeIcons.filter,
+                                      ? FeatherIcons.filter
+                                      : FeatherIcons.filter,
                                   size: 18,
                                 ),
                                 tooltip: showFilters
@@ -310,10 +310,10 @@ class _PrimarySidebar extends StatelessWidget {
                   final isRecording = recordController.isRecording.value;
                   return FilledButton.icon(
                     onPressed: onRecord,
-                    icon: FaIcon(
+                    icon: Icon(
                       isRecording
-                          ? FontAwesomeIcons.stop
-                          : FontAwesomeIcons.microphone,
+                          ? FeatherIcons.square
+                          : FeatherIcons.mic,
                       size: 16,
                     ),
                     label: Text(isRecording ? 'Stop Recording' : 'Record'),
@@ -331,24 +331,31 @@ class _PrimarySidebar extends StatelessWidget {
               const SizedBox(height: 24),
               _SidebarItem(
                 label: 'Notes',
-                icon: FontAwesomeIcons.noteSticky,
-                activeIcon: FontAwesomeIcons.noteSticky,
+                icon: FeatherIcons.fileText,
+                activeIcon: FeatherIcons.fileText,
                 selected: currentIndex == 0,
                 onTap: () => onSelect(0),
               ),
               _SidebarItem(
                 label: 'Insights',
-                icon: FontAwesomeIcons.chartLine,
-                activeIcon: FontAwesomeIcons.chartLine,
+                icon: FeatherIcons.trendingUp,
+                activeIcon: FeatherIcons.trendingUp,
                 selected: currentIndex == 1,
                 onTap: () => onSelect(1),
               ),
               _SidebarItem(
-                label: 'Settings',
-                icon: FontAwesomeIcons.gear,
-                activeIcon: FontAwesomeIcons.gear,
+                label: 'Tasks',
+                icon: FeatherIcons.checkSquare,
+                activeIcon: FeatherIcons.checkSquare,
                 selected: currentIndex == 2,
                 onTap: () => onSelect(2),
+              ),
+              _SidebarItem(
+                label: 'Settings',
+                icon: FeatherIcons.settings,
+                activeIcon: FeatherIcons.settings,
+                selected: currentIndex == 3,
+                onTap: () => onSelect(3),
               ),
               const Spacer(),
             ],
@@ -384,7 +391,7 @@ class _SidebarItem extends StatelessWidget {
       child: ListTile(
         onTap: onTap,
         selected: selected,
-        leading: FaIcon(selected ? activeIcon : icon, size: 18),
+        leading: Icon(selected ? activeIcon : icon, size: 18),
         title: Text(label, style: theme.textTheme.bodyMedium),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         selectedTileColor: colorScheme.primaryContainer.withValues(alpha: 0.1),

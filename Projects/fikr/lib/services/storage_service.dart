@@ -27,8 +27,21 @@ class StorageService extends GetxService {
   late File _notesFile;
   late File _configFile;
   late File _insightsFile;
+  late File _tasksFile;
+  late File _remindersFile;
 
+  static const _kOnboardingCompleteKey = 'onboarding_complete';
   static const _kSubscriptionKey = 'subscription_tier';
+  static const _kAIDataConsentKey = 'ai_data_consent';
+
+  Future<bool> isOnboardingComplete() async {
+    final value = await _secureStorage.read(key: _kOnboardingCompleteKey);
+    return value == 'true';
+  }
+
+  Future<void> setOnboardingComplete() async {
+    await _secureStorage.write(key: _kOnboardingCompleteKey, value: 'true');
+  }
 
   Future<void> saveSubscriptionStatus(String tier) async {
     await _secureStorage.write(key: _kSubscriptionKey, value: tier);
@@ -36,6 +49,18 @@ class StorageService extends GetxService {
 
   Future<String> getSubscriptionStatus() async {
     return await _secureStorage.read(key: _kSubscriptionKey) ?? 'free';
+  }
+
+  Future<bool> hasAIDataConsent() async {
+    final value = await _secureStorage.read(key: _kAIDataConsentKey);
+    return value == 'true';
+  }
+
+  Future<void> setAIDataConsent(bool consent) async {
+    await _secureStorage.write(
+      key: _kAIDataConsentKey,
+      value: consent ? 'true' : 'false',
+    );
   }
 
   String get audioDirPath => _audioDir.path;
@@ -51,6 +76,8 @@ class StorageService extends GetxService {
       _notesFile = File(p.join(_baseDir.path, 'notes.json'));
       _configFile = File(p.join(_baseDir.path, 'config.json'));
       _insightsFile = File(p.join(_baseDir.path, 'insight_editions.json'));
+      _tasksFile = File(p.join(_baseDir.path, 'tasks.json'));
+      _remindersFile = File(p.join(_baseDir.path, 'reminders.json'));
       _initCompleter.complete();
     } catch (e, stack) {
       debugPrint('StorageService Init Error: $e');
@@ -170,6 +197,34 @@ class StorageService extends GetxService {
   Future<void> saveInsightEditions(List<InsightEdition> editions) async {
     await isReady;
     await _insightsFile.writeAsString(InsightEdition.listToJson(editions));
+  }
+
+  Future<List<TodoItem>> loadTasks() async {
+    await isReady;
+    if (!await _tasksFile.exists()) {
+      return [];
+    }
+    final raw = await _tasksFile.readAsString();
+    return TodoItem.listFromJson(raw);
+  }
+
+  Future<void> saveTasks(List<TodoItem> tasks) async {
+    await isReady;
+    await _tasksFile.writeAsString(TodoItem.listToJson(tasks));
+  }
+
+  Future<List<ReminderItem>> loadReminders() async {
+    await isReady;
+    if (!await _remindersFile.exists()) {
+      return [];
+    }
+    final raw = await _remindersFile.readAsString();
+    return ReminderItem.listFromJson(raw);
+  }
+
+  Future<void> saveReminders(List<ReminderItem> reminders) async {
+    await isReady;
+    await _remindersFile.writeAsString(ReminderItem.listToJson(reminders));
   }
 
   Future<void> clearAll() async {

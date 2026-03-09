@@ -253,7 +253,7 @@ class AppController extends GetxController with WidgetsBindingObserver {
     final transcriptionModel = config.value.transcriptionModel;
 
     if (provider == null) {
-      errorMessage.value = 'No provider configured. Go to Settings.';
+      errorMessage.value = 'Fikr isn\'t set up yet. Go to Settings.';
       return;
     }
 
@@ -658,7 +658,7 @@ class AppController extends GetxController with WidgetsBindingObserver {
     try {
       final provider = config.value.activeProvider;
       if (provider == null) {
-        _notifyError('No provider configured.');
+        _notifyError('Fikr isn\'t set up yet.');
         return;
       }
       final apiKey = await storage.getApiKey(provider.id);
@@ -847,7 +847,9 @@ class AppController extends GetxController with WidgetsBindingObserver {
     await _saveTasks();
   }
 
-  Future<void> _mergeGeneratedReminders(List<Map<String, dynamic>> llmReminders) async {
+  Future<void> _mergeGeneratedReminders(
+    List<Map<String, dynamic>> llmReminders,
+  ) async {
     for (final data in llmReminders) {
       final title = (data['title'] as String? ?? '').trim();
       if (title.isEmpty) continue;

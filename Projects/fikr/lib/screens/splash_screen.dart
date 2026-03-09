@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
-import 'home_shell.dart';
+import '../services/storage_service.dart';
 import '../utils/assets.dart';
+import 'home_shell.dart';
+import 'onboarding_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -34,9 +36,15 @@ class _SplashScreenState extends State<SplashScreen>
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
 
     _controller.forward().then((_) {
-      Future.delayed(const Duration(milliseconds: 500), () {
-        if (mounted) {
+      Future.delayed(const Duration(milliseconds: 500), () async {
+        if (!mounted) return;
+        final storage = Get.find<StorageService>();
+        final onboarded = await storage.isOnboardingComplete();
+        if (!mounted) return;
+        if (onboarded) {
           Get.off(() => HomeShell());
+        } else {
+          Get.off(() => const OnboardingScreen());
         }
       });
     });
@@ -88,11 +96,8 @@ class _SplashScreenState extends State<SplashScreen>
                 const SizedBox(height: 24),
                 Text(
                   'Fikr',
-                  style: TextStyle(
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     color: Theme.of(context).colorScheme.onSurface,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.2,
                   ),
                 ),
               ],

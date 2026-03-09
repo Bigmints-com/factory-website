@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:flutter_feather_icons/flutter_feather_icons.dart';
 import 'package:get/get.dart';
 import '../../controllers/record_controller.dart';
+import '../../controllers/theme_controller.dart';
 
 class MobileShell extends StatelessWidget {
   const MobileShell({
@@ -61,31 +62,39 @@ class MobileShell extends StatelessWidget {
         height: 65, // Slightly taller for better touch targets
         elevation: 0,
         backgroundColor: colorScheme.surface,
-        indicatorColor: colorScheme.secondary,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         destinations: [
           NavigationDestination(
-            icon: const FaIcon(FontAwesomeIcons.noteSticky, size: 20),
-            selectedIcon: const FaIcon(
-              FontAwesomeIcons.solidNoteSticky,
+            icon: const Icon(FeatherIcons.fileText, size: 20),
+            selectedIcon: const Icon(
+              FeatherIcons.file,
               size: 20,
               color: Colors.white,
             ),
             label: 'Notes',
           ),
           NavigationDestination(
-            icon: const FaIcon(FontAwesomeIcons.chartLine, size: 20),
-            selectedIcon: const FaIcon(
-              FontAwesomeIcons.arrowTrendUp,
+            icon: const Icon(FeatherIcons.trendingUp, size: 20),
+            selectedIcon: const Icon(
+              FeatherIcons.trendingUp,
               size: 20,
               color: Colors.white,
             ),
             label: 'Insights',
           ),
           NavigationDestination(
-            icon: const FaIcon(FontAwesomeIcons.gear, size: 20),
-            selectedIcon: const FaIcon(
-              FontAwesomeIcons.gear,
+            icon: const Icon(FeatherIcons.checkSquare, size: 20),
+            selectedIcon: Icon(
+              FeatherIcons.checkSquare,
+              size: 20,
+              color: colorScheme.primary,
+            ),
+            label: 'Tasks',
+          ),
+          NavigationDestination(
+            icon: const Icon(FeatherIcons.settings, size: 20),
+            selectedIcon: const Icon(
+              FeatherIcons.settings,
               size: 20,
               color: Colors.white,
             ),
@@ -97,28 +106,19 @@ class MobileShell extends StatelessWidget {
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: Obx(() {
         final isRecording = recordController.isRecording.value;
-        final isDark = Theme.of(context).brightness == Brightness.dark;
         return SizedBox(
-          height: 64, // Standard large FAB
+          height: 64,
           width: 64,
           child: FloatingActionButton(
             onPressed: onRecord,
-            elevation: 4, // Add elevation for standard FAB look
+            elevation: 4,
             backgroundColor: isRecording
-                ? Colors.red
-                : (isDark ? Colors.white : Colors.black),
+                ? AppPalette.danger
+                : AppPalette.primary,
             shape: const CircleBorder(),
             child: isRecording
-                ? const FaIcon(
-                    FontAwesomeIcons.stop,
-                    color: Colors.white,
-                    size: 24,
-                  )
-                : FaIcon(
-                    FontAwesomeIcons.microphone,
-                    color: isDark ? Colors.black : Colors.white,
-                    size: 28,
-                  ),
+                ? const Icon(FeatherIcons.square, color: Colors.white, size: 24)
+                : const Icon(FeatherIcons.mic, color: Colors.white, size: 28),
           ),
         );
       }),

@@ -25,22 +25,159 @@ class TodoItem {
   final String id;
   final String title;
   final String source;
-  final String status;
+  final String status; // 'todo', 'done'
+  final String description;
+  final String sourceNoteId;
+  final DateTime createdAt;
+  final DateTime? completedAt;
 
   const TodoItem({
     required this.id,
     required this.title,
     required this.source,
     required this.status,
+    this.description = '',
+    this.sourceNoteId = '',
+    required this.createdAt,
+    this.completedAt,
   });
 
-  TodoItem copyWith({String? status}) {
+  bool get isCompleted => status == 'done';
+
+  TodoItem copyWith({
+    String? title,
+    String? status,
+    String? description,
+    DateTime? completedAt,
+    bool clearCompletedAt = false,
+  }) {
     return TodoItem(
       id: id,
-      title: title,
+      title: title ?? this.title,
       source: source,
       status: status ?? this.status,
+      description: description ?? this.description,
+      sourceNoteId: sourceNoteId,
+      createdAt: createdAt,
+      completedAt: clearCompletedAt ? null : (completedAt ?? this.completedAt),
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'source': source,
+      'status': status,
+      'description': description,
+      'sourceNoteId': sourceNoteId,
+      'createdAt': createdAt.toIso8601String(),
+      'completedAt': completedAt?.toIso8601String(),
+    };
+  }
+
+  factory TodoItem.fromJson(Map<String, dynamic> json) {
+    return TodoItem(
+      id: json['id'] as String? ?? '',
+      title: json['title'] as String? ?? '',
+      source: json['source'] as String? ?? '',
+      status: json['status'] as String? ?? 'todo',
+      description: json['description'] as String? ?? '',
+      sourceNoteId: json['sourceNoteId'] as String? ?? '',
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'] as String)
+          : DateTime.now(),
+      completedAt: json['completedAt'] != null
+          ? DateTime.parse(json['completedAt'] as String)
+          : null,
+    );
+  }
+
+  static List<TodoItem> listFromJson(String raw) {
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! List) return [];
+      return decoded
+          .whereType<Map<String, dynamic>>()
+          .map(TodoItem.fromJson)
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  static String listToJson(List<TodoItem> items) {
+    return jsonEncode(items.map((item) => item.toJson()).toList());
+  }
+}
+
+class ReminderItem {
+  final String id;
+  final String title;
+  final DateTime date;
+  final String? time;
+  final String sourceNoteId;
+  final bool isDismissed;
+
+  const ReminderItem({
+    required this.id,
+    required this.title,
+    required this.date,
+    this.time,
+    this.sourceNoteId = '',
+    this.isDismissed = false,
+  });
+
+  ReminderItem copyWith({bool? isDismissed}) {
+    return ReminderItem(
+      id: id,
+      title: title,
+      date: date,
+      time: time,
+      sourceNoteId: sourceNoteId,
+      isDismissed: isDismissed ?? this.isDismissed,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'date': date.toIso8601String(),
+      'time': time,
+      'sourceNoteId': sourceNoteId,
+      'isDismissed': isDismissed,
+    };
+  }
+
+  factory ReminderItem.fromJson(Map<String, dynamic> json) {
+    return ReminderItem(
+      id: json['id'] as String? ?? '',
+      title: json['title'] as String? ?? '',
+      date: json['date'] != null
+          ? DateTime.parse(json['date'] as String)
+          : DateTime.now(),
+      time: json['time'] as String?,
+      sourceNoteId: json['sourceNoteId'] as String? ?? '',
+      isDismissed: json['isDismissed'] as bool? ?? false,
+    );
+  }
+
+  static List<ReminderItem> listFromJson(String raw) {
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! List) return [];
+      return decoded
+          .whereType<Map<String, dynamic>>()
+          .map(ReminderItem.fromJson)
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  static String listToJson(List<ReminderItem> items) {
+    return jsonEncode(items.map((item) => item.toJson()).toList());
   }
 }
 
@@ -93,6 +230,8 @@ class GeneratedInsights {
   final List<String> risks;
   final List<String> questions;
   final List<String> workSummaries;
+  final List<Map<String, dynamic>> llmTasks;
+  final List<Map<String, dynamic>> llmReminders;
 
   const GeneratedInsights({
     required this.title,
@@ -103,6 +242,8 @@ class GeneratedInsights {
     required this.risks,
     required this.questions,
     required this.workSummaries,
+    this.llmTasks = const [],
+    this.llmReminders = const [],
   });
 
   factory GeneratedInsights.fromJson(Map<String, dynamic> json) {
@@ -128,6 +269,12 @@ class GeneratedInsights {
           .toList(),
       workSummaries: (json['work_summaries'] as List<dynamic>? ?? [])
           .map((item) => item.toString())
+          .toList(),
+      llmTasks: (json['tasks'] as List<dynamic>? ?? [])
+          .whereType<Map<String, dynamic>>()
+          .toList(),
+      llmReminders: (json['reminders'] as List<dynamic>? ?? [])
+          .whereType<Map<String, dynamic>>()
           .toList(),
     );
   }

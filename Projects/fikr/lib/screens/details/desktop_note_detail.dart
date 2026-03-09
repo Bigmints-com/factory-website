@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:flutter_feather_icons/flutter_feather_icons.dart';
 import 'package:get/get.dart';
 import 'note_detail_controller.dart';
 import 'widgets/detail_audio_player.dart';
@@ -22,7 +22,7 @@ class DesktopNoteDetail extends StatelessWidget {
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const FaIcon(FontAwesomeIcons.xmark, size: 20),
+          icon: const Icon(FeatherIcons.x, size: 20),
           onPressed: () {
             if (onClose != null) {
               onClose!();
@@ -33,8 +33,8 @@ class DesktopNoteDetail extends StatelessWidget {
         ),
         actions: [
           IconButton(
-            icon: FaIcon(
-              FontAwesomeIcons.trash,
+            icon: Icon(
+              FeatherIcons.trash2,
               size: 18,
               color: theme.colorScheme.error,
             ),

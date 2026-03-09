@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:flutter_feather_icons/flutter_feather_icons.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../controllers/app_controller.dart';
@@ -8,6 +8,7 @@ import '../../controllers/theme_controller.dart';
 import '../../services/firebase_service.dart';
 import '../../services/sync_service.dart';
 import '../../services/toast_service.dart';
+import '../../utils/app_typography.dart';
 import 'auth_screen.dart';
 import 'provider_detail_screen.dart';
 
@@ -29,10 +30,47 @@ class MobileSettings extends StatelessWidget {
             title: 'Theme',
             child: Obx(
               () => SegmentedButton<ThemeMode>(
-                segments: const [
-                  ButtonSegment(value: ThemeMode.system, label: Text('Auto')),
-                  ButtonSegment(value: ThemeMode.light, label: Text('Light')),
-                  ButtonSegment(value: ThemeMode.dark, label: Text('Dark')),
+                style: ButtonStyle(
+                  backgroundColor: WidgetStateProperty.resolveWith((states) {
+                    if (states.contains(WidgetState.selected)) {
+                      return AppPalette.primary;
+                    }
+                    return Colors.transparent;
+                  }),
+                  foregroundColor: WidgetStateProperty.resolveWith((states) {
+                    if (states.contains(WidgetState.selected)) {
+                      return Colors.white;
+                    }
+                    return Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.7);
+                  }),
+                  iconColor: WidgetStateProperty.resolveWith((states) {
+                    if (states.contains(WidgetState.selected)) {
+                      return Colors.white;
+                    }
+                    return Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.5);
+                  }),
+                ),
+                showSelectedIcon: false,
+                segments: [
+                  ButtonSegment(
+                    value: ThemeMode.system,
+                    icon: Icon(FeatherIcons.monitor, size: 18),
+                    label: const Text('Auto'),
+                  ),
+                  ButtonSegment(
+                    value: ThemeMode.light,
+                    icon: Icon(FeatherIcons.sun, size: 18),
+                    label: const Text('Light'),
+                  ),
+                  ButtonSegment(
+                    value: ThemeMode.dark,
+                    icon: Icon(FeatherIcons.moon, size: 18),
+                    label: const Text('Dark'),
+                  ),
                 ],
                 selected: {themeController.themeMode.value},
                 onSelectionChanged: (s) async {
@@ -49,13 +87,13 @@ class MobileSettings extends StatelessWidget {
           const SizedBox(height: 32),
           _Section(
             isCard: true,
-            title: 'AI Provider',
+            title: 'AI Service',
             child: Obx(() {
               final provider = controller.config.value.activeProvider;
               if (provider == null) {
                 return ListTile(
-                  title: const Text('Not configured'),
-                  subtitle: const Text('Tap to set up your AI provider'),
+                  title: const Text('Not set up yet'),
+                  subtitle: const Text('Tap to get started'),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => Get.to(() => const ProviderDetailScreen()),
                 );
@@ -86,8 +124,8 @@ class MobileSettings extends StatelessWidget {
                         backgroundColor: Theme.of(
                           context,
                         ).colorScheme.primaryContainer,
-                        child: FaIcon(
-                          FontAwesomeIcons.user,
+                        child: Icon(
+                          FeatherIcons.user,
                           size: 16,
                           color: Theme.of(context).colorScheme.primary,
                         ),
@@ -96,16 +134,13 @@ class MobileSettings extends StatelessWidget {
                       subtitle: const Text('Cloud sync enabled'),
                     ),
                     ListTile(
-                      leading: const FaIcon(
-                        FontAwesomeIcons.cloudArrowUp,
-                        size: 18,
-                      ),
+                      leading: const Icon(FeatherIcons.uploadCloud, size: 18),
                       title: const Text('Sync Now'),
                       onTap: () => Get.find<SyncService>().syncToCloud(),
                     ),
                     ListTile(
-                      leading: FaIcon(
-                        FontAwesomeIcons.rightFromBracket,
+                      leading: Icon(
+                        FeatherIcons.logOut,
                         size: 18,
                         color: Theme.of(context).colorScheme.error,
                       ),
@@ -165,10 +200,7 @@ class MobileSettings extends StatelessWidget {
                       width: double.infinity,
                       child: FilledButton.icon(
                         onPressed: () => AuthScreen.show(context),
-                        icon: const FaIcon(
-                          FontAwesomeIcons.rightToBracket,
-                          size: 16,
-                        ),
+                        icon: const Icon(FeatherIcons.logIn, size: 16),
                         label: const Text('Sign In or Create Account'),
                       ),
                     ),
@@ -311,16 +343,16 @@ class _Section extends StatelessWidget {
   final bool isCard;
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(title, style: Theme.of(context).textTheme.titleMedium),
-          ],
+        Text(
+          title,
+          style: AppTypography.titleMedium.copyWith(
+            color: theme.colorScheme.onSurface,
+          ),
         ),
-        const SizedBox(height: 12),
         const SizedBox(height: 12),
         isCard ? Card(child: child) : child,
       ],

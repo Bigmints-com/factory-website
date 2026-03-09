@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'insights/desktop_insights.dart';
 import 'insights/mobile_insights.dart';
 import 'insights/widgets/insight_components.dart';
 
+import '../utils/app_typography.dart';
 import '../utils/layout.dart';
 
 import '../controllers/app_controller.dart';
@@ -80,22 +80,15 @@ class InsightsScreen extends StatelessWidget {
             isDesktop: useWideLayout,
           );
 
-          final todoPanel = _TodoPanel(
-            todoItems: controller.todoItems,
-            onCycle: controller.cycleTodoStatus,
-          );
-
           if (!useWideLayout) {
             return MobileInsights(
               mainContent: mainContent,
-              todoPanel: todoPanel,
               controller: controller,
             );
           }
 
           return DesktopInsights(
             mainContent: mainContent,
-            todoPanel: todoPanel,
             controller: controller,
           );
         });
@@ -121,14 +114,12 @@ class _InsightUpdateCard extends StatelessWidget {
               children: [
                 const CircularProgressIndicator(),
                 const SizedBox(height: 24),
-                Text(
-                  'Updating Insights',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
+                Text('Updating Insights', style: AppTypography.titleMedium),
                 const SizedBox(height: 8),
                 Text(
                   status.isNotEmpty ? status : 'Analyzing your thoughts...',
                   textAlign: TextAlign.center,
+                  style: AppTypography.bodyMedium,
                 ),
               ],
             ),
@@ -169,214 +160,48 @@ class _InsightsMainContent extends StatelessWidget {
         Padding(
           padding: isDesktop
               ? const EdgeInsets.all(0)
-              : const EdgeInsets.all(16),
-          child: Card(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('HIGHLIGHTS', style: theme.textTheme.labelSmall),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Three things you talked about the most.',
-                    style: theme.textTheme.headlineSmall,
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    generatedInsights?.summary.isNotEmpty == true
-                        ? generatedInsights!.summary
-                        : localInsights.editorial,
-                    style: theme.textTheme.bodyMedium,
-                  ),
-
-                  const SizedBox(height: 16),
-                  if (highlightItems.isNotEmpty)
-                    ...highlightItems.asMap().entries.map(
-                      (e) => HighlightTile(item: e.value, index: e.key + 1),
-                    )
-                  else if (highlightFallback.isNotEmpty)
-                    ...highlightFallback.asMap().entries.map(
-                      (e) => HighlightTile(
-                        item: InsightHighlight(
-                          title: e.value.title,
-                          detail: e.value.snippet,
-                          icon: 'idea',
-                          bucket: '',
-                        ),
-                        index: e.key + 1,
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _TodoPanel extends StatelessWidget {
-  const _TodoPanel({required this.todoItems, required this.onCycle});
-  final List<TodoItem> todoItems;
-  final Function(String) onCycle;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final activeItems = todoItems.where((t) => t.status != 'done').toList();
-    final completedItems = todoItems.where((t) => t.status == 'done').toList();
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+              : const EdgeInsets.all(0),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const FaIcon(FontAwesomeIcons.listCheck, size: 16),
-                const SizedBox(width: 12),
-                Text('Tasks', style: theme.textTheme.titleSmall),
-                const Spacer(),
-                if (completedItems.isNotEmpty)
-                  TextButton.icon(
-                    onPressed: () =>
-                        _showCompletedTasks(context, completedItems),
-                    icon: const Icon(Icons.history, size: 16),
-                    label: Text(
-                      '${completedItems.length} Completed',
-                      style: const TextStyle(fontSize: 12),
+                Text(
+                  'HIGHLIGHTS',
+                  style: AppTypography.labelSmall.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Your top 3 topics this week.',
+                  style: AppTypography.headlineSmall.copyWith(
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                if (highlightItems.isNotEmpty)
+                  ...highlightItems.asMap().entries.map(
+                    (e) => HighlightTile(item: e.value, index: e.key + 1),
+                  )
+                else if (highlightFallback.isNotEmpty)
+                  ...highlightFallback.asMap().entries.map(
+                    (e) => HighlightTile(
+                      item: InsightHighlight(
+                        title: e.value.title,
+                        detail: e.value.snippet,
+                        icon: 'idea',
+                        bucket: '',
+                      ),
+                      index: e.key + 1,
                     ),
                   ),
               ],
             ),
-            const SizedBox(height: 16),
-            if (activeItems.isEmpty)
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 32),
-                  child: Column(
-                    children: [
-                      Icon(
-                        Icons.done_all_rounded,
-                        size: 32,
-                        color: theme.colorScheme.primary.withValues(alpha: 0.3),
-                      ),
-                      const SizedBox(height: 12),
-                      const Text(
-                        'No pending tasks. Great job!',
-                        style: TextStyle(
-                          fontStyle: FontStyle.italic,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              )
-            else
-              ...activeItems.map(
-                (todo) => CheckboxListTile(
-                  value: false,
-                  title: Text(todo.title),
-                  subtitle: Text(
-                    todo.source,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                    ),
-                  ),
-                  onChanged: (_) => onCycle(todo.id),
-                  controlAffinity: ListTileControlAffinity.leading,
-                  dense: true,
-                  visualDensity: VisualDensity.compact,
-                ),
-              ),
-          ],
+          ),
         ),
-      ),
-    );
-  }
-
-  void _showCompletedTasks(BuildContext context, List<TodoItem> items) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) =>
-          _CompletedTasksModal(items: items, onCycle: onCycle),
-    );
-  }
-}
-
-class _CompletedTasksModal extends StatelessWidget {
-  const _CompletedTasksModal({required this.items, required this.onCycle});
-  final List<TodoItem> items;
-  final Function(String) onCycle;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      padding: EdgeInsets.only(
-        top: 20,
-        left: 20,
-        right: 20,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 40,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Completed Tasks', style: theme.textTheme.titleMedium),
-              IconButton(
-                onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.close),
-              ),
-            ],
-          ),
-          const Divider(),
-          const SizedBox(height: 8),
-          Flexible(
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: items.length,
-              itemBuilder: (context, index) {
-                final todo = items[index];
-                return ListTile(
-                  leading: const Icon(Icons.check_circle, color: Colors.green),
-                  title: Text(
-                    todo.title,
-                    style: const TextStyle(
-                      decoration: TextDecoration.lineThrough,
-                    ),
-                  ),
-                  subtitle: Text(
-                    todo.source,
-                    style: const TextStyle(fontSize: 11),
-                  ),
-                  trailing: TextButton(
-                    onPressed: () {
-                      onCycle(todo.id);
-                      Navigator.pop(context);
-                    },
-                    child: const Text('Reopen'),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
+      ],
     );
   }
 }

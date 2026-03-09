@@ -119,11 +119,11 @@ class AppConfig {
 
   static Color getBucketColor(String bucket) {
     final Map<String, Color> maps = {
-      'Personal Life': const Color(0xFFFDB7B9),
-      'Health & Fitness': const Color(0xFFB4EBB7),
-      'Work Life': const Color(0xFFAADCEB),
-      'Finance': const Color(0xFFFBECB2),
-      'General': const Color(0xFFD1D5DB),
+      'Personal Life': const Color.fromARGB(1, 255, 0, 8),
+      'Health & Fitness': const Color.fromARGB(255, 0, 255, 13),
+      'Work Life': const Color.fromARGB(255, 1, 196, 255),
+      'Finance': const Color.fromARGB(255, 255, 204, 0),
+      'General': const Color.fromARGB(255, 0, 102, 255),
     };
 
     if (maps.containsKey(bucket)) return maps[bucket]!;

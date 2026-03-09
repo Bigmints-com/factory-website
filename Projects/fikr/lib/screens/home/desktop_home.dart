@@ -24,7 +24,7 @@ class DesktopHome extends StatelessWidget {
     final width = MediaQuery.of(context).size.width;
     final gridCount = width >= 1600
         ? 4
-        : width >= 1350
+        : width >= 900
         ? 3
         : 2;
 
@@ -42,13 +42,19 @@ class DesktopHome extends StatelessWidget {
               Expanded(
                 child: GridView.builder(
                   scrollDirection: Axis.vertical,
-                  padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
+                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
                   itemCount: notes.length,
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: gridCount,
                     mainAxisSpacing: 32,
                     crossAxisSpacing: 32,
-                    childAspectRatio: gridCount > 1 ? 1.4 : 2.5,
+                    childAspectRatio: gridCount >= 4
+                        ? 1.4
+                        : gridCount >= 3
+                        ? 1.2
+                        : gridCount > 1
+                        ? 1.4
+                        : 2.5,
                   ),
                   itemBuilder: (context, index) {
                     final note = notes[index];
@@ -189,7 +195,6 @@ class _FiltersSidebar extends StatelessWidget {
                                     : theme.colorScheme.onSurface.withValues(
                                         alpha: 0.5,
                                       ),
-                                fontWeight: isSelected ? FontWeight.bold : null,
                               ),
                             ),
                             onTap: () {

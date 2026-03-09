@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:flutter_feather_icons/flutter_feather_icons.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -8,6 +7,7 @@ import '../../../controllers/app_controller.dart';
 import '../../../models/llm_provider.dart';
 import '../../../services/openai_service.dart';
 import '../../../services/toast_service.dart';
+import '../../../widgets/ai_data_consent_dialog.dart';
 
 class ProviderSetupDialog extends StatefulWidget {
   const ProviderSetupDialog({super.key});
@@ -20,8 +20,7 @@ class _ProviderSetupDialogState extends State<ProviderSetupDialog> {
   final _keyController = TextEditingController();
   bool _isLoading = false;
   bool _isValid = false;
-  // ignore: prefer_final_fields
-  LLMProviderType _selectedType = LLMProviderType.openai;
+  LLMProviderType _selectedType = LLMProviderType.google;
 
   @override
   void initState() {
@@ -36,6 +35,50 @@ class _ProviderSetupDialogState extends State<ProviderSetupDialog> {
     }
   }
 
+  String _getKeyHint(LLMProviderType type) {
+    switch (type) {
+      case LLMProviderType.openai:
+        return 'sk-...';
+      case LLMProviderType.google:
+        return 'AIza...';
+      case LLMProviderType.openrouter:
+        return 'sk-or-...';
+    }
+  }
+
+  String _getHelpUrl(LLMProviderType type) {
+    switch (type) {
+      case LLMProviderType.openai:
+        return 'https://platform.openai.com/api-keys';
+      case LLMProviderType.google:
+        return 'https://aistudio.google.com/app/apikey';
+      case LLMProviderType.openrouter:
+        return 'https://openrouter.ai/keys';
+    }
+  }
+
+  String _getSubtitle(LLMProviderType type) {
+    switch (type) {
+      case LLMProviderType.openai:
+        return 'ChatGPT & Whisper';
+      case LLMProviderType.google:
+        return 'Recommended · Free to start';
+      case LLMProviderType.openrouter:
+        return 'Use many different AI models';
+    }
+  }
+
+  IconData _getProviderIcon(LLMProviderType type) {
+    switch (type) {
+      case LLMProviderType.openai:
+        return FeatherIcons.cpu;
+      case LLMProviderType.google:
+        return Icons.g_mobiledata;
+      case LLMProviderType.openrouter:
+        return FeatherIcons.navigation;
+    }
+  }
+
   Future<void> _submit() async {
     if (!_isValid) return;
 
@@ -44,17 +87,15 @@ class _ProviderSetupDialogState extends State<ProviderSetupDialog> {
       final controller = Get.find<AppController>();
       final String id = '${_selectedType.name}-default';
 
-      // Create new provider config
       final provider = LLMProvider(
         id: id,
-        name: _selectedType.name,
+        name: _selectedType.displayName,
         type: _selectedType,
         baseUrl: _selectedType.defaultBaseUrl,
       );
 
       final currentConfig = controller.config.value;
 
-      // Validate API key by sending a test request
       final llmService = LLMService();
       final isKeyValid = await llmService.validateApiKey(
         _keyController.text.trim(),
@@ -66,33 +107,44 @@ class _ProviderSetupDialogState extends State<ProviderSetupDialog> {
             context,
             title: 'Invalid API Key',
             description:
-                'Could not connect with this key. Please check and try again.',
+                'That key didn\u0027t work. Please check and try again.',
           );
         }
         setState(() => _isLoading = false);
         return;
       }
 
-      // Update config to single active provider
+      // Show AI data consent dialog before saving provider
+      final hasConsent = await controller.storage.hasAIDataConsent();
+      if (!hasConsent) {
+        if (!mounted) return;
+        final agreed = await AIDataConsentDialog.show(
+          context,
+          provider: provider,
+        );
+        if (!agreed) {
+          setState(() => _isLoading = false);
+          return;
+        }
+        await controller.storage.setAIDataConsent(true);
+      }
+
       final newConfig = currentConfig.copyWith(
         activeProvider: provider,
         analysisModel: _selectedType.defaultAnalysisModel,
         transcriptionModel: _selectedType.defaultTranscriptionModel,
       );
 
-      // Save Config & Key
-      await controller.updateConfig(newConfig);
+      // Save Key first, then Config (so refreshCanRecord reads the persisted key)
       await controller.storage.saveApiKey(id, _keyController.text.trim());
-
-      // Force refresh of recording state
-      // (This is handled inside updateConfig -> _updateCanRecord, but good to know)
+      await controller.updateConfig(newConfig);
 
       if (mounted) {
-        Navigator.pop(context, true); // Return true to indicate success
+        Navigator.pop(context, true);
         ToastService.showSuccess(
           context,
           title: 'Ready to Record',
-          description: 'AI Assistant configured successfully.',
+          description: 'You\u0027re all set!',
         );
       }
     } catch (e) {
@@ -131,13 +183,13 @@ class _ProviderSetupDialogState extends State<ProviderSetupDialog> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           child: Center(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const SizedBox(height: 16),
-                Center(
-                  child: Container(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 500),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const SizedBox(height: 16),
+                  Container(
                     height: 80,
                     width: 80,
                     decoration: BoxDecoration(
@@ -145,148 +197,182 @@ class _ProviderSetupDialogState extends State<ProviderSetupDialog> {
                       shape: BoxShape.circle,
                     ),
                     child: Center(
-                      child: FaIcon(
-                        FontAwesomeIcons.wandMagicSparkles,
+                      child: Icon(
+                        FeatherIcons.zap,
                         size: 32,
                         color: colorScheme.primary,
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 32),
-                Text(
-                  'Unlock your AI Assistant',
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: -0.5,
+                  const SizedBox(height: 32),
+                  Text(
+                    'Set up Fikr',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.headlineMedium,
                   ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Connect a provider to start turning your voice into structured, actionable notes instantly.',
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurface.withValues(alpha: 0.6),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Pick an AI service below so Fikr can turn your voice into notes.',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurface.withValues(alpha: 0.6),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 48),
+                  const SizedBox(height: 36),
 
-                // Provider Selector (Simplified for now to just OpenAI as primary, but scalable)
-                Text(
-                  'Provider',
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
+                  // Provider selector
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Choose a service',
+                      style: theme.textTheme.labelLarge,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 600),
-                  child: Column(
+                  const SizedBox(height: 12),
+                  ...LLMProviderType.values.map(
+                    (type) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: _ProviderCard(
+                        title: type.displayName,
+                        subtitle: _getSubtitle(type),
+                        icon: _getProviderIcon(type),
+                        isSelected: _selectedType == type,
+                        onTap: () {
+                          setState(() {
+                            _selectedType = type;
+                            _keyController.clear();
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // API Key
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Your Secret Key',
+                      style: theme.textTheme.labelLarge,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _keyController,
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      hintText: _getKeyHint(_selectedType),
+                      hintStyle: TextStyle(
+                        color: colorScheme.onSurface.withValues(alpha: 0.3),
+                      ),
+                      filled: true,
+                      fillColor: isDark
+                          ? const Color(0xFF1F2937)
+                          : Colors.grey[100],
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 16,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
                     children: [
-                      _ProviderCard(
-                        title: 'OpenAI',
-                        subtitle: 'Recommended for best accuracy',
-                        assetPath: 'assets/images/openai_logo.svg',
-                        isSelected: _selectedType == LLMProviderType.openai,
-                        onTap:
-                            () {}, // Only one option likely needed for quick start, or expand later
+                      Icon(
+                        Icons.lock_outline,
+                        size: 14,
+                        color: colorScheme.onSurface.withValues(alpha: 0.4),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(width: 4),
                       Text(
-                        'API Key',
-                        style: theme.textTheme.labelLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextField(
-                        controller: _keyController,
-                        obscureText: true,
-                        decoration: InputDecoration(
-                          hintText: 'sk-...',
-                          hintStyle: TextStyle(
-                            color: colorScheme.onSurface.withValues(alpha: 0.3),
-                          ),
-                          filled: true,
-                          fillColor: isDark
-                              ? const Color(0xFF1F2937)
-                              : Colors.grey[100],
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide.none,
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 16,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Your key is stored securely on your device.',
+                        'Saved safely on your phone only',
                         style: theme.textTheme.labelSmall?.copyWith(
-                          color: colorScheme.onSurface.withValues(alpha: 0.5),
+                          color: colorScheme.onSurface.withValues(alpha: 0.4),
                         ),
                       ),
-
-                      const SizedBox(height: 48),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: FilledButton(
-                          onPressed: _isLoading || !_isValid ? null : _submit,
-                          style: FilledButton.styleFrom(
-                            backgroundColor: Colors.black,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            elevation: 0,
+                      const Spacer(),
+                      TextButton(
+                        onPressed: () =>
+                            launchUrl(Uri.parse(_getHelpUrl(_selectedType))),
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: Text(
+                          'Get your key →',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: colorScheme.primary,
                           ),
-                          child: _isLoading
-                              ? const SizedBox(
-                                  height: 24,
-                                  width: 24,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : const Text(
-                                  'Start Recording',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'By connecting your provider, you agree to our terms of service and privacy policy.',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: colorScheme.onSurface.withValues(alpha: 0.5),
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () => launchUrl(
-                          Uri.parse('https://fikr.app/terms'),
-                          mode: LaunchMode.externalApplication,
-                        ),
-                        child: const Text('Terms of Service'),
-                      ),
-                      TextButton(
-                        onPressed: () => launchUrl(
-                          Uri.parse('https://fikr.app/privacy'),
-                          mode: LaunchMode.externalApplication,
-                        ),
-                        child: const Text('Privacy Policy'),
                       ),
                     ],
                   ),
-                ),
-              ],
+
+                  const SizedBox(height: 32),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: FilledButton(
+                      onPressed: _isLoading || !_isValid ? null : _submit,
+                      style: FilledButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: _isLoading
+                          ? const SizedBox(
+                              height: 24,
+                              width: 24,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text('Get Started', style: TextStyle()),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'By continuing, you agree to our terms and privacy policy.',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: colorScheme.onSurface.withValues(alpha: 0.5),
+                    ),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      TextButton(
+                        onPressed: () => launchUrl(
+                          Uri.parse('https://fikr.bigmints.com/terms'),
+                          mode: LaunchMode.externalApplication,
+                        ),
+                        child: const Text('Terms'),
+                      ),
+                      Text(
+                        '·',
+                        style: TextStyle(
+                          color: colorScheme.onSurface.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () => launchUrl(
+                          Uri.parse('https://fikr.bigmints.com/privacy'),
+                          mode: LaunchMode.externalApplication,
+                        ),
+                        child: const Text('Privacy'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              ),
             ),
           ),
         ),
@@ -299,14 +385,14 @@ class _ProviderCard extends StatelessWidget {
   const _ProviderCard({
     required this.title,
     required this.subtitle,
+    required this.icon,
     required this.isSelected,
     required this.onTap,
-    required this.assetPath,
   });
 
   final String title;
   final String subtitle;
-  final String assetPath;
+  final IconData icon;
   final bool isSelected;
   final VoidCallback onTap;
 
@@ -314,15 +400,17 @@ class _ProviderCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
     return GestureDetector(
       onTap: onTap,
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isSelected
               ? colorScheme.primary.withValues(alpha: 0.05)
-              : theme.cardColor,
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected
@@ -337,42 +425,42 @@ class _ProviderCard extends StatelessWidget {
               height: 40,
               width: 40,
               decoration: BoxDecoration(
-                color: isSelected ? Colors.white : Colors.grey[100],
+                color: isSelected
+                    ? colorScheme.primary.withValues(alpha: 0.1)
+                    : isDark
+                    ? Colors.white.withValues(alpha: 0.05)
+                    : Colors.grey[100],
                 shape: BoxShape.circle,
               ),
-              padding: const EdgeInsets.all(8),
               child: Center(
-                child: SvgPicture.asset(
-                  assetPath,
-                  colorFilter: const ColorFilter.mode(
-                    Colors.black,
-                    BlendMode.srcIn,
-                  ),
+                child: Icon(
+                  icon,
+                  size: 18,
+                  color: isSelected
+                      ? colorScheme.primary
+                      : colorScheme.onSurface.withValues(alpha: 0.5),
                 ),
               ),
             ),
             const SizedBox(width: 16),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: theme.textTheme.titleSmall),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurface.withValues(alpha: 0.5),
+                    ),
                   ),
-                ),
-                Text(
-                  subtitle,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurface.withValues(alpha: 0.6),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
-            const Spacer(),
             if (isSelected)
-              FaIcon(
-                FontAwesomeIcons.circleCheck,
+              Icon(
+                FeatherIcons.checkCircle,
                 color: colorScheme.primary,
                 size: 20,
               ),

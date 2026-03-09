@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:flutter_feather_icons/flutter_feather_icons.dart';
 import 'package:get/get.dart';
 import 'note_detail_controller.dart';
 import 'widgets/detail_audio_player.dart';
@@ -11,6 +11,14 @@ class MobileNoteDetail extends StatelessWidget {
   final NoteDetailController controller;
   final VoidCallback? onClose;
 
+  void _close(BuildContext context) {
+    if (onClose != null) {
+      onClose!();
+    } else {
+      Navigator.of(context).pop();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -20,71 +28,64 @@ class MobileNoteDetail extends StatelessWidget {
       child: Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
         appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          surfaceTintColor: Colors.transparent,
-          elevation: 0,
-          leading: IconButton(
-            icon: const FaIcon(FontAwesomeIcons.xmark, size: 20),
-            onPressed: () {
-              if (onClose != null) {
-                onClose!();
-              } else {
-                Navigator.of(context).pop();
-              }
-            },
-          ),
+          toolbarHeight: 44,
+          scrolledUnderElevation: 0,
           actions: [
-            IconButton(
-              icon: FaIcon(
-                FontAwesomeIcons.trash,
-                size: 18,
-                color: theme.colorScheme.error,
+            Obx(
+              () => _HeaderButton(
+                icon: controller.isEditing.value
+                    ? FeatherIcons.check
+                    : FeatherIcons.edit2,
+                size: 16,
+                color: controller.isEditing.value
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                onPressed: () {
+                  if (controller.isEditing.value) {
+                    controller.saveEdit();
+                  } else {
+                    controller.isEditing.value = true;
+                  }
+                },
               ),
+            ),
+
+            _HeaderButton(
+              icon: FeatherIcons.trash2,
+              size: 15,
+              color: theme.colorScheme.error.withValues(alpha: 0.7),
               onPressed: () async {
                 final confirmed = await _showDeleteDialog(context);
                 if (confirmed == true) {
                   await controller.deleteNote();
-                  if (context.mounted) {
-                    if (onClose != null) {
-                      onClose!();
-                    } else {
-                      Navigator.of(context).pop();
-                    }
-                  }
+                  if (context.mounted) _close(context);
                 }
               },
             ),
-            const SizedBox(width: 8),
           ],
         ),
         body: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                DetailContent(controller: controller),
-                const SizedBox(height: 32),
-                DetailAudioPlayer(controller: controller),
-                const SizedBox(height: 32),
-                Obx(() {
-                  if (!controller.isEditing.value) {
-                    return const SizedBox.shrink();
-                  }
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 40, bottom: 40),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: FilledButton(
-                        onPressed: controller.saveEdit,
-                        child: const Text('Save Changes'),
-                      ),
-                    ),
-                  );
-                }),
-                const SizedBox(height: 24),
-              ],
-            ),
+          child: Column(
+            children: [
+              // ── Content ──
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 4,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      DetailContent(controller: controller),
+                      const SizedBox(height: 32),
+                      DetailAudioPlayer(controller: controller),
+                      const SizedBox(height: 24),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -110,6 +111,33 @@ class MobileNoteDetail extends StatelessWidget {
             child: const Text('Delete'),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// A compact header icon button with no extra padding.
+class _HeaderButton extends StatelessWidget {
+  const _HeaderButton({
+    required this.icon,
+    required this.size,
+    required this.color,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final double size;
+  final Color color;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onPressed,
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.all(8),
+        child: Icon(icon, size: size, color: color),
       ),
     );
   }

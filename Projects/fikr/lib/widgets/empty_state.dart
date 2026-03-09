@@ -43,19 +43,14 @@ class EmptyState extends StatelessWidget {
             const SizedBox(height: 24),
             Text(
               title,
-              style: textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: textTheme.headlineSmall,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 12),
             Text(
               description,
               textAlign: TextAlign.center,
-              style: textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                height: 1.5,
-              ),
+              style: textTheme.bodyLarge,
             ),
             if (action != null) ...[const SizedBox(height: 32), action!],
           ],

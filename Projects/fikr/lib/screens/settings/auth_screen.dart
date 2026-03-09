@@ -1,7 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import '../../services/firebase_service.dart';
 import '../../services/sync_service.dart';
 import '../../services/toast_service.dart';
@@ -12,16 +13,31 @@ class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
 
   static Future<void> show(BuildContext context) {
+    final isDesktop = MediaQuery.of(context).size.width > 600;
+
+    if (isDesktop) {
+      return Navigator.of(context, rootNavigator: true).push(
+        PageRouteBuilder(
+          opaque: false,
+          barrierDismissible: true,
+          barrierColor: Colors.black54,
+          pageBuilder: (context, animation, _) {
+            return FadeTransition(
+              opacity: animation,
+              child: const AuthScreen(),
+            );
+          },
+          transitionDuration: const Duration(milliseconds: 300),
+          reverseTransitionDuration: const Duration(milliseconds: 200),
+        ),
+      );
+    }
+
+    // Mobile: full-screen modal
     return Navigator.of(context, rootNavigator: true).push(
-      PageRouteBuilder(
-        opaque: false,
-        barrierDismissible: true,
-        barrierColor: Colors.black54,
-        pageBuilder: (context, animation, _) {
-          return FadeTransition(opacity: animation, child: const AuthScreen());
-        },
-        transitionDuration: const Duration(milliseconds: 300),
-        reverseTransitionDuration: const Duration(milliseconds: 200),
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => const AuthScreen(),
       ),
     );
   }
@@ -35,6 +51,7 @@ class _AuthScreenState extends State<AuthScreen>
   bool _isSignUp = false;
   bool _isLoading = false;
   bool _isGoogleLoading = false;
+  bool _isAppleLoading = false;
   bool _showPassword = false;
   String? _errorMessage;
 
@@ -76,6 +93,66 @@ class _AuthScreenState extends State<AuthScreen>
     final colorScheme = theme.colorScheme;
     final isDesktop = MediaQuery.of(context).size.width > 600;
 
+    if (!isDesktop) {
+      return _buildMobileLayout(theme, colorScheme);
+    }
+
+    return _buildDesktopLayout(theme, colorScheme);
+  }
+
+  /// Full-screen layout for mobile.
+  Widget _buildMobileLayout(ThemeData theme, ColorScheme colorScheme) {
+    return Scaffold(
+      backgroundColor: colorScheme.surface,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          onPressed: () => Navigator.of(context).pop(),
+          icon: const Icon(Icons.close),
+        ),
+      ),
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 400),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildHeader(colorScheme, showCloseButton: false),
+                  const SizedBox(height: 32),
+                  if (Platform.isIOS || Platform.isMacOS)
+                    _buildAppleButton(colorScheme),
+                  if (Platform.isIOS || Platform.isMacOS)
+                    const SizedBox(height: 12),
+                  _buildGoogleButton(colorScheme),
+                  const SizedBox(height: 24),
+                  _buildDivider(colorScheme),
+                  const SizedBox(height: 24),
+                  _buildEmailField(colorScheme),
+                  const SizedBox(height: 16),
+                  _buildPasswordField(colorScheme),
+                  if (_errorMessage != null) ...[
+                    const SizedBox(height: 12),
+                    _buildError(),
+                  ],
+                  const SizedBox(height: 24),
+                  _buildSubmitButton(colorScheme),
+                  const SizedBox(height: 20),
+                  _buildToggle(colorScheme),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Floating card overlay for desktop.
+  Widget _buildDesktopLayout(ThemeData theme, ColorScheme colorScheme) {
     return GestureDetector(
       onTap: () => Navigator.of(context).pop(),
       child: Scaffold(
@@ -86,11 +163,8 @@ class _AuthScreenState extends State<AuthScreen>
             child: SlideTransition(
               position: _slideAnimation,
               child: Container(
-                width: isDesktop ? 440 : double.infinity,
-                margin: isDesktop
-                    ? EdgeInsets.zero
-                    : const EdgeInsets.symmetric(horizontal: 20),
-                constraints: const BoxConstraints(maxHeight: 600),
+                width: 440,
+                constraints: const BoxConstraints(maxHeight: 640),
                 decoration: BoxDecoration(
                   color: colorScheme.surface,
                   borderRadius: BorderRadius.circular(24),
@@ -117,6 +191,10 @@ class _AuthScreenState extends State<AuthScreen>
                       children: [
                         _buildHeader(colorScheme),
                         const SizedBox(height: 32),
+                        if (Platform.isIOS || Platform.isMacOS)
+                          _buildAppleButton(colorScheme),
+                        if (Platform.isIOS || Platform.isMacOS)
+                          const SizedBox(height: 12),
                         _buildGoogleButton(colorScheme),
                         const SizedBox(height: 24),
                         _buildDivider(colorScheme),
@@ -144,22 +222,23 @@ class _AuthScreenState extends State<AuthScreen>
     );
   }
 
-  Widget _buildHeader(ColorScheme colorScheme) {
+  Widget _buildHeader(ColorScheme colorScheme, {bool showCloseButton = true}) {
     return Column(
       children: [
-        // Close button row
-        Align(
-          alignment: Alignment.centerRight,
-          child: IconButton(
-            onPressed: () => Navigator.of(context).pop(),
-            icon: const Icon(Icons.close, size: 20),
-            style: IconButton.styleFrom(
-              backgroundColor: colorScheme.onSurface.withValues(alpha: 0.06),
-              foregroundColor: colorScheme.onSurface.withValues(alpha: 0.5),
+        // Close button row (desktop overlay only)
+        if (showCloseButton)
+          Align(
+            alignment: Alignment.centerRight,
+            child: IconButton(
+              onPressed: () => Navigator.of(context).pop(),
+              icon: const Icon(Icons.close, size: 20),
+              style: IconButton.styleFrom(
+                backgroundColor: colorScheme.onSurface.withValues(alpha: 0.06),
+                foregroundColor: colorScheme.onSurface.withValues(alpha: 0.5),
+              ),
             ),
           ),
-        ),
-        const SizedBox(height: 8),
+        if (showCloseButton) const SizedBox(height: 8),
         // Cloud icon
         Container(
           width: 56,
@@ -184,19 +263,14 @@ class _AuthScreenState extends State<AuthScreen>
         const SizedBox(height: 20),
         Text(
           _isSignUp ? 'Create Account' : 'Welcome Back',
-          style: GoogleFonts.inter(
-            fontSize: 24,
-            fontWeight: FontWeight.w700,
-            letterSpacing: -0.5,
-          ),
+          style: Theme.of(context).textTheme.headlineSmall,
         ),
         const SizedBox(height: 8),
         Text(
           _isSignUp
-              ? 'Sign up to sync your notes across devices'
-              : 'Sign in to access your synced notes',
-          style: GoogleFonts.inter(
-            fontSize: 14,
+              ? 'Create an account to keep your notes everywhere'
+              : 'Sign in to get your notes back',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: colorScheme.onSurface.withValues(alpha: 0.5),
           ),
           textAlign: TextAlign.center,
@@ -231,17 +305,59 @@ class _AuthScreenState extends State<AuthScreen>
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   // Google "G" as FontAwesome icon
-                  FaIcon(
-                    FontAwesomeIcons.google,
+                  Icon(
+                    Icons.g_mobiledata,
                     size: 18,
                     color: colorScheme.onSurface,
                   ),
                   const SizedBox(width: 12),
                   Text(
                     'Continue with Google',
-                    style: GoogleFonts.inter(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ],
+              ),
+      ),
+    );
+  }
+
+  Widget _buildAppleButton(ColorScheme colorScheme) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: OutlinedButton(
+        onPressed: _isAppleLoading ? null : _handleAppleSignIn,
+        style: OutlinedButton.styleFrom(
+          backgroundColor: isDark ? Colors.white : Colors.black,
+          side: BorderSide.none,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          foregroundColor: isDark ? Colors.black : Colors.white,
+        ),
+        child: _isAppleLoading
+            ? SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: isDark ? Colors.black : Colors.white,
+                ),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.apple,
+                    size: 20,
+                    color: isDark ? Colors.black : Colors.white,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Continue with Apple',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: isDark ? Colors.black : Colors.white,
                     ),
                   ),
                 ],
@@ -260,8 +376,7 @@ class _AuthScreenState extends State<AuthScreen>
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
             'or',
-            style: GoogleFonts.inter(
-              fontSize: 13,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: colorScheme.onSurface.withValues(alpha: 0.4),
             ),
           ),
@@ -280,11 +395,10 @@ class _AuthScreenState extends State<AuthScreen>
       keyboardType: TextInputType.emailAddress,
       textInputAction: TextInputAction.next,
       onSubmitted: (_) => _passwordFocus.requestFocus(),
-      style: GoogleFonts.inter(fontSize: 15),
+      style: Theme.of(context).textTheme.bodyMedium,
       decoration: InputDecoration(
         labelText: 'Email',
-        labelStyle: GoogleFonts.inter(
-          fontSize: 14,
+        labelStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
           color: colorScheme.onSurface.withValues(alpha: 0.5),
         ),
         prefixIcon: Icon(
@@ -317,11 +431,10 @@ class _AuthScreenState extends State<AuthScreen>
       obscureText: !_showPassword,
       textInputAction: TextInputAction.done,
       onSubmitted: (_) => _handleEmailAuth(),
-      style: GoogleFonts.inter(fontSize: 15),
+      style: Theme.of(context).textTheme.bodyMedium,
       decoration: InputDecoration(
         labelText: 'Password',
-        labelStyle: GoogleFonts.inter(
-          fontSize: 14,
+        labelStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
           color: colorScheme.onSurface.withValues(alpha: 0.5),
         ),
         prefixIcon: Icon(
@@ -363,10 +476,7 @@ class _AuthScreenState extends State<AuthScreen>
         color: Colors.red.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(10),
       ),
-      child: Text(
-        _errorMessage!,
-        style: GoogleFonts.inter(fontSize: 13, color: Colors.red[700]),
-      ),
+      child: Text(_errorMessage!, style: TextStyle(color: Colors.red[700])),
     );
   }
 
@@ -382,10 +492,7 @@ class _AuthScreenState extends State<AuthScreen>
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
-          textStyle: GoogleFonts.inter(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-          ),
+          textStyle: Theme.of(context).textTheme.bodyMedium,
         ),
         child: _isLoading
             ? const SizedBox(
@@ -407,8 +514,7 @@ class _AuthScreenState extends State<AuthScreen>
       children: [
         Text(
           _isSignUp ? 'Already have an account?' : "Don't have an account?",
-          style: GoogleFonts.inter(
-            fontSize: 13,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
             color: colorScheme.onSurface.withValues(alpha: 0.5),
           ),
         ),
@@ -426,11 +532,9 @@ class _AuthScreenState extends State<AuthScreen>
           ),
           child: Text(
             _isSignUp ? 'Sign In' : 'Sign Up',
-            style: GoogleFonts.inter(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: colorScheme.primary,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: colorScheme.primary),
           ),
         ),
       ],
@@ -491,7 +595,7 @@ class _AuthScreenState extends State<AuthScreen>
           ToastService.showSuccess(
             Get.context!,
             title: _isSignUp ? 'Account Created' : 'Signed In',
-            description: 'Cloud sync is now active.',
+            description: 'Your notes will stay in sync.',
           );
         }
       }
@@ -526,7 +630,7 @@ class _AuthScreenState extends State<AuthScreen>
           ToastService.showSuccess(
             Get.context!,
             title: 'Signed In',
-            description: 'Cloud sync is now active.',
+            description: 'Your notes will stay in sync.',
           );
         }
       }
@@ -534,6 +638,40 @@ class _AuthScreenState extends State<AuthScreen>
       if (mounted) {
         setState(() {
           _isGoogleLoading = false;
+          _errorMessage = _friendlyError(e);
+        });
+      }
+    }
+  }
+
+  Future<void> _handleAppleSignIn() async {
+    setState(() {
+      _isAppleLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final user = await FirebaseService().signInWithApple();
+      if (user == null) {
+        if (mounted) setState(() => _isAppleLoading = false);
+        return;
+      }
+
+      if (mounted) {
+        Get.find<SyncService>().setSyncEnabled(true);
+        Navigator.of(context).pop();
+        if (Get.context != null) {
+          ToastService.showSuccess(
+            Get.context!,
+            title: 'Signed In',
+            description: 'Your notes will stay in sync.',
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isAppleLoading = false;
           _errorMessage = _friendlyError(e);
         });
       }

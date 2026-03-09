@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../../controllers/app_controller.dart';
-import '../../controllers/record_controller.dart';
+import '../../controllers/theme_controller.dart';
 import '../../models/app_config.dart';
 import '../../models/note.dart';
 import '../note_detail_screen.dart';
@@ -61,14 +59,13 @@ class MobileHome extends StatelessWidget {
 
     return CustomScrollView(
       slivers: [
-        SliverToBoxAdapter(child: const _HeroBanner()),
         notes.isEmpty
             ? SliverToBoxAdapter()
             : SliverToBoxAdapter(
                 child: Padding(
                   padding: isDesktop
                       ? const EdgeInsets.all(0)
-                      : const EdgeInsets.fromLTRB(24, 24, 24, 16),
+                      : const EdgeInsets.fromLTRB(16, 16, 16, 16),
                   child: SizedBox(
                     height: 44,
                     child: ListView.separated(
@@ -78,7 +75,6 @@ class MobileHome extends StatelessWidget {
                           const SizedBox(width: 8),
                       itemBuilder: (context, index) {
                         final theme = Theme.of(context);
-                        final isDark = theme.brightness == Brightness.dark;
                         final entry = entries[index];
                         final selected =
                             entry.key == appController.selectedBucket.value;
@@ -107,21 +103,17 @@ class MobileHome extends StatelessWidget {
                           showCheckmark: false,
                           labelStyle: TextStyle(
                             color: selected
-                                ? (isDark ? Colors.black : Colors.white)
+                                ? Colors.white
                                 : theme.colorScheme.onSurface,
-                            fontWeight: selected
-                                ? FontWeight.w700
-                                : FontWeight.w600,
-                            fontSize: 12,
                           ),
-                          selectedColor: isDark ? Colors.white : Colors.black,
+                          selectedColor: AppPalette.primary,
                           backgroundColor: Colors.transparent,
                           shape: const StadiumBorder(
                             side: BorderSide(style: BorderStyle.none),
                           ),
                           side: BorderSide(
                             color: selected
-                                ? (isDark ? Colors.white : Colors.black)
+                                ? AppPalette.primary
                                 : theme.colorScheme.outline.withValues(
                                     alpha: 0.3,
                                   ),
@@ -137,7 +129,7 @@ class MobileHome extends StatelessWidget {
           SliverFillRemaining(
             hasScrollBody: false,
             child: Padding(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(16),
               child: emptyState,
             ),
           )
@@ -149,15 +141,12 @@ class MobileHome extends StatelessWidget {
                 final item = groupedNotes[index];
                 if (item is String) {
                   return Padding(
-                    padding: const EdgeInsets.only(bottom: 24),
+                    padding: const EdgeInsets.only(bottom: 16),
                     child: Text(
                       item,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: Colors.grey,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                        letterSpacing: 0.5,
-                      ),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.labelMedium?.copyWith(color: Colors.grey),
                     ),
                   );
                 } else if (item is Note) {
@@ -220,148 +209,5 @@ class MobileHome extends StatelessWidget {
       result.addAll(entry.value);
     }
     return result;
-  }
-}
-
-class _HeroBanner extends StatelessWidget {
-  const _HeroBanner();
-
-  @override
-  Widget build(BuildContext context) {
-    final recordController = Get.find<RecordController>();
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      height: 280, // Fixed height for better control over the background logo
-      child: Stack(
-        clipBehavior: Clip.antiAlias,
-        children: [
-          // Background Styling
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: isDark
-                    ? [const Color(0xFF1F2937), const Color(0xFF111827)]
-                    : [const Color(0xFF111827), const Color(0xFF1F2937)],
-              ),
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.2),
-                  blurRadius: 15,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-          ),
-
-          // Faded Background Logo
-          Positioned(
-            right: -40,
-            bottom: -40,
-            child: Opacity(
-              opacity: 0.08,
-              child: SvgPicture.asset(
-                'assets/images/logo.svg',
-                width: 220,
-                height: 220,
-                colorFilter: const ColorFilter.mode(
-                  Colors.white,
-                  BlendMode.srcIn,
-                ),
-              ),
-            ),
-          ),
-
-          // Content
-          Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 32),
-                    const Text(
-                      'Capture your\nthoughts instantly.',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        height: 1.1,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Tap to record a voice note.',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.6),
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    Obx(() {
-                      final isRecording = recordController.isRecording.value;
-                      return GestureDetector(
-                        onTap: recordController.toggleRecording,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isRecording ? Colors.red : Colors.white,
-                            borderRadius: BorderRadius.circular(100),
-                            boxShadow: [
-                              if (isRecording)
-                                BoxShadow(
-                                  color: Colors.red.withValues(alpha: 0.4),
-                                  blurRadius: 12,
-                                  spreadRadius: 2,
-                                ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              FaIcon(
-                                isRecording
-                                    ? FontAwesomeIcons.stop
-                                    : FontAwesomeIcons.microphone,
-                                color: isRecording
-                                    ? Colors.white
-                                    : Colors.black,
-                                size: 16,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                isRecording ? 'Stop Recording' : 'Record Now',
-                                style: TextStyle(
-                                  color: isRecording
-                                      ? Colors.white
-                                      : Colors.black,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }

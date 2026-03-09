@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:flutter_feather_icons/flutter_feather_icons.dart';
 import 'package:toastification/toastification.dart';
 
 class ToastService {
@@ -16,7 +16,7 @@ class ToastService {
       description: description != null ? Text(description) : null,
       alignment: Alignment.bottomCenter,
       autoCloseDuration: const Duration(seconds: 4),
-      icon: const FaIcon(FontAwesomeIcons.circleCheck),
+      icon: const Icon(FeatherIcons.checkCircle),
       borderRadius: BorderRadius.circular(12),
       showProgressBar: false,
     );
@@ -35,7 +35,7 @@ class ToastService {
       description: description != null ? Text(description) : null,
       alignment: Alignment.bottomCenter,
       autoCloseDuration: const Duration(seconds: 4),
-      icon: const FaIcon(FontAwesomeIcons.circleExclamation),
+      icon: const Icon(FeatherIcons.alertCircle),
       borderRadius: BorderRadius.circular(12),
       showProgressBar: false,
     );
@@ -54,7 +54,7 @@ class ToastService {
       description: description != null ? Text(description) : null,
       alignment: Alignment.bottomCenter,
       autoCloseDuration: const Duration(seconds: 4),
-      icon: const FaIcon(FontAwesomeIcons.circleInfo),
+      icon: const Icon(FeatherIcons.info),
       borderRadius: BorderRadius.circular(12),
       showProgressBar: false,
     );

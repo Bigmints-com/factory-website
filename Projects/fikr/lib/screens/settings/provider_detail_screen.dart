@@ -106,8 +106,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
           ToastService.showError(
             context,
             title: 'Invalid API Key',
-            description:
-                'Could not connect with this key. Please check and try again.',
+            description: 'That key didn\'t work. Please check and try again.',
           );
         }
         setState(() => _isLoading = false);
@@ -147,7 +146,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
         ToastService.showSuccess(
           context,
           title: 'Saved',
-          description: '${_selectedType.displayName} configured successfully.',
+          description: '${_selectedType.displayName} is ready to go.',
         );
       }
     } catch (e) {
@@ -167,9 +166,9 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Remove Provider'),
+        title: const Text('Remove AI Service'),
         content: const Text(
-          'This will remove your API key and provider settings.',
+          'This will remove your key and reset Fikr\'s AI setup.',
         ),
         actions: [
           TextButton(
@@ -207,7 +206,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
         ToastService.showSuccess(
           context,
           title: 'Removed',
-          description: 'Provider removed.',
+          description: 'AI service removed.',
         );
       }
     } catch (e) {
@@ -215,7 +214,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
         ToastService.showError(
           context,
           title: 'Error',
-          description: 'Failed to remove provider: $e',
+          description: 'Something went wrong. Please try again.',
         );
       }
       setState(() => _isLoading = false);
@@ -230,7 +229,9 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.provider == null ? 'Add Provider' : 'Edit Provider'),
+        title: Text(
+          widget.provider == null ? 'Add AI Service' : 'Edit AI Service',
+        ),
       ),
       body: Center(
         child: ConstrainedBox(
@@ -239,7 +240,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
             padding: const EdgeInsets.all(24),
             children: [
               // Provider type selector
-              Text('Provider', style: theme.textTheme.labelLarge),
+              Text('Service', style: theme.textTheme.labelLarge),
               const SizedBox(height: 12),
               ...LLMProviderType.values.map(
                 (type) => Padding(
@@ -261,7 +262,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
               const SizedBox(height: 32),
 
               // API Key
-              Text('API Key', style: theme.textTheme.labelLarge),
+              Text('Your Secret Key', style: theme.textTheme.labelLarge),
               const SizedBox(height: 8),
               TextField(
                 controller: _keyController,
@@ -295,7 +296,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    'Stored securely on your device',
+                    'Saved safely on your phone only',
                     style: theme.textTheme.labelSmall?.copyWith(
                       color: colorScheme.onSurface.withValues(alpha: 0.4),
                     ),
@@ -310,7 +311,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                     child: Text(
-                      'Get API Key →',
+                      'Get your key →',
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: colorScheme.primary,
                       ),
@@ -357,7 +358,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                     minimumSize: const Size.fromHeight(50),
                   ),
                   onPressed: _isLoading ? null : _delete,
-                  child: const Text('Remove Provider'),
+                  child: const Text('Remove AI Service'),
                 ),
               ],
             ],

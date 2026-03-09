@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:flutter_feather_icons/flutter_feather_icons.dart';
 import 'package:get/get.dart';
 import '../note_detail_controller.dart';
 
@@ -44,8 +44,8 @@ class DetailAudioPlayer extends StatelessWidget {
           children: [
             IconButton.filledTonal(
               onPressed: controller.togglePlayback,
-              icon: FaIcon(
-                isPlaying ? FontAwesomeIcons.pause : FontAwesomeIcons.play,
+              icon: Icon(
+                isPlaying ? FeatherIcons.pause : FeatherIcons.play,
                 size: 14,
               ),
               style: IconButton.styleFrom(
@@ -100,8 +100,6 @@ class DetailAudioPlayer extends StatelessWidget {
                             color: theme.colorScheme.onSurface.withValues(
                               alpha: 0.3,
                             ),
-                            fontSize: 9,
-                            fontWeight: FontWeight.w700,
                           ),
                         ),
                         Text(
@@ -110,8 +108,6 @@ class DetailAudioPlayer extends StatelessWidget {
                             color: theme.colorScheme.onSurface.withValues(
                               alpha: 0.3,
                             ),
-                            fontSize: 9,
-                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ],

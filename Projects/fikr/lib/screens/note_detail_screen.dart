@@ -4,6 +4,7 @@ import 'details/desktop_note_detail.dart';
 import 'details/mobile_note_detail.dart';
 import 'details/note_detail_controller.dart';
 import '../models/note.dart';
+import '../utils/ios_modal_route.dart';
 
 class NoteDetailScreen extends StatelessWidget {
   final Note note;
@@ -42,9 +43,10 @@ class NoteDetailScreen extends StatelessWidget {
         ),
       );
     } else {
-      return Navigator.of(context).push(
-        MaterialPageRoute(builder: (context) => NoteDetailScreen(note: note)),
-      );
+      // iOS-style fullscreen modal
+      return Navigator.of(
+        context,
+      ).push(IosModalRoute(page: NoteDetailScreen(note: note)));
     }
   }
 

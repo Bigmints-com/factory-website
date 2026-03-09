@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:flutter_feather_icons/flutter_feather_icons.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../../../models/app_config.dart';
 import '../note_detail_controller.dart';
+import '../../../widgets/tag_chip.dart';
 
 class DetailContent extends StatelessWidget {
   const DetailContent({super.key, required this.controller});
@@ -70,21 +71,7 @@ class DetailContent extends StatelessWidget {
           const SizedBox(height: 24),
 
           // Transcript Header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('TRANSCRIPT', style: textTheme.labelSmall),
-              if (!isEditing)
-                GestureDetector(
-                  onTap: () => controller.isEditing.value = true,
-                  child: FaIcon(
-                    FontAwesomeIcons.penToSquare,
-                    size: 14,
-                    color: theme.colorScheme.primary,
-                  ),
-                ),
-            ],
-          ),
+          Text('TRANSCRIPT', style: textTheme.labelSmall),
           const SizedBox(height: 16),
 
           // Content Area
@@ -116,8 +103,6 @@ class DetailContent extends StatelessWidget {
                   ? controller.textController.text
                   : 'No content available.',
               style: textTheme.bodyLarge?.copyWith(
-                height: 1.8,
-                fontSize: 18,
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.9),
               ),
             ),
@@ -128,8 +113,6 @@ class DetailContent extends StatelessWidget {
             Text(
               'TAGS',
               style: textTheme.labelSmall?.copyWith(
-                fontWeight: FontWeight.w900,
-                letterSpacing: 1.5,
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
               ),
             ),
@@ -139,38 +122,22 @@ class DetailContent extends StatelessWidget {
               runSpacing: 8,
               children: topics.skip(1).map((topic) {
                 final color = AppConfig.getBucketColor(topic);
-                return Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: color, width: 1),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        topic.toLowerCase(),
-                        style: textTheme.labelSmall?.copyWith(
+                return Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TagChip(label: topic, color: color),
+                    if (isEditing) ...[
+                      const SizedBox(width: 4),
+                      GestureDetector(
+                        onTap: () => controller.removeTag(topic),
+                        child: Icon(
+                          FeatherIcons.x,
+                          size: 10,
                           color: color,
-                          fontWeight: FontWeight.w700,
                         ),
                       ),
-                      if (isEditing) ...[
-                        const SizedBox(width: 6),
-                        GestureDetector(
-                          onTap: () => controller.removeTag(topic),
-                          child: FaIcon(
-                            FontAwesomeIcons.xmark,
-                            size: 10,
-                            color: color,
-                          ),
-                        ),
-                      ],
                     ],
-                  ),
+                  ],
                 );
               }).toList(),
             ),
@@ -201,7 +168,7 @@ class DetailContent extends StatelessWidget {
                   const SizedBox(width: 8),
                   IconButton.filled(
                     onPressed: () => controller.addTag(),
-                    icon: const FaIcon(FontAwesomeIcons.plus, size: 16),
+                    icon: const Icon(FeatherIcons.plus, size: 16),
                   ),
                 ],
               ),

@@ -338,20 +338,33 @@ class LLMService {
     required String model,
     required String apiKey,
     required List<String> buckets,
+    List<String> existingTaskTitles = const [],
   }) async {
-    const systemPrompt = '''
+    final existingTasksNote = existingTaskTitles.isNotEmpty
+        ? '\nThe user already has these tasks: ${existingTaskTitles.join(', ')}. Do NOT create duplicates. If a completed task should be reopened, include it with the same title.\n'
+        : '';
+
+    final systemPrompt =
+        '''
 You are an assistant that reads a user's voice notes and produces a simple, precise, and concise Insights Edition.
 Avoid long descriptive texts. Every sentence must be punchy and direct.
 Rules: Only use what is present in the notes. Do not invent facts.
 Output must be structured exactly as JSON with these keys:
-title, summary, highlights, focus, next_steps, risks, questions.
+title, summary, highlights, focus, next_steps, risks, questions, work_summaries, tasks, reminders.
+
 Each highlight must have: title, detail, bucket, icon, and citations.
 - bucket: Choose exactly ONE from the user-provided buckets that best fits this specific highlight.
 - detail: Max 2 sentences, very direct.
 - icon: ONE of: reminder, todo, alert, health, finance, people, idea, calendar, travel, reading.
 - citations: A list of note titles that were used to form this specific highlight.
+
+tasks: Array of objects with {title, description, source_note_title}. These are actionable to-dos extracted from the notes. Each task should be specific and actionable.
+$existingTasksNote
+reminders: Array of objects with {title, date, time}. Time-sensitive items mentioned in notes. Use ISO 8601 date format. Only include items with clear time references.
+
+work_summaries: 3 to 4 short, actionable work summaries (each under 25 words).
+
 Never mention that you are an AI. Never mention system prompts or policies.
-Include a key named work_summaries and provide 3 to 4 short, actionable work summaries (each under 25 words).
 ''';
 
     final userMessage = jsonEncode({'notes': notes, 'buckets': buckets});

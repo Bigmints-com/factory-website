@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:flutter_feather_icons/flutter_feather_icons.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../controllers/app_controller.dart';
@@ -64,16 +64,14 @@ class DesktopSettings extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
                 _SettingItem(
-                  title: 'AI Provider',
+                  title: 'AI Service',
                   child: Obx(() {
                     final provider = controller.config.value.activeProvider;
                     if (provider == null) {
                       return Card(
                         child: ListTile(
                           title: const Text('Not configured'),
-                          subtitle: const Text(
-                            'Tap to set up your AI provider',
-                          ),
+                          subtitle: const Text('Tap to get started'),
                           trailing: const Icon(Icons.chevron_right),
                           onTap: () =>
                               Get.to(() => const ProviderDetailScreen()),
@@ -105,8 +103,8 @@ class DesktopSettings extends StatelessWidget {
                         children: [
                           CircleAvatar(
                             backgroundColor: theme.colorScheme.primaryContainer,
-                            child: FaIcon(
-                              FontAwesomeIcons.user,
+                            child: Icon(
+                              FeatherIcons.user,
                               size: 16,
                               color: theme.colorScheme.primary,
                             ),
@@ -133,8 +131,8 @@ class DesktopSettings extends StatelessWidget {
                           OutlinedButton.icon(
                             onPressed: () =>
                                 Get.find<SyncService>().syncToCloud(),
-                            icon: const FaIcon(
-                              FontAwesomeIcons.cloudArrowUp,
+                            icon: const Icon(
+                              FeatherIcons.uploadCloud,
                               size: 14,
                             ),
                             label: const Text('Sync Now'),
@@ -185,10 +183,7 @@ class DesktopSettings extends StatelessWidget {
                           width: double.infinity,
                           child: FilledButton.icon(
                             onPressed: () => AuthScreen.show(context),
-                            icon: const FaIcon(
-                              FontAwesomeIcons.rightToBracket,
-                              size: 14,
-                            ),
+                            icon: const Icon(FeatherIcons.logIn, size: 14),
                             label: const Text('Sign In or Create Account'),
                           ),
                         ),

@@ -1,11 +1,12 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:flutter_feather_icons/flutter_feather_icons.dart';
 import 'package:get/get.dart';
 import 'package:fikr/screens/insights_screen.dart';
 import 'package:fikr/screens/new_home_screen.dart';
 import 'package:fikr/screens/settings_screen.dart';
 import 'package:fikr/screens/settings/widgets/provider_setup_dialog.dart';
+import 'package:fikr/screens/tasks/tasks_screen.dart';
 import 'package:fikr/screens/shells/desktop_shell.dart';
 import 'package:fikr/screens/shells/mobile_shell.dart';
 import 'package:fikr/screens/insights/widgets/insight_dialogs.dart';
@@ -22,10 +23,12 @@ class HomeShell extends StatelessWidget {
 
   final NavigationController navController = Get.put(NavigationController());
   final RecordController recordController = Get.put(RecordController());
+  final RxBool isSearching = false.obs;
 
   final List<Widget> _screens = const [
     NewHomeScreen(),
     InsightsScreen(),
+    TasksScreen(),
     SettingsScreen(),
   ];
 
@@ -36,6 +39,8 @@ class HomeShell extends StatelessWidget {
       case 1:
         return 'Insights';
       case 2:
+        return 'Tasks';
+      case 3:
         return 'Settings';
       default:
         return 'Notes';
@@ -134,7 +139,13 @@ class HomeShell extends StatelessWidget {
                 index: index,
                 title: _titleForIndex(index),
                 body: bodyContent,
-                onSelect: navController.setIndex,
+                onSelect: (i) {
+                  if (i != 0) {
+                    isSearching.value = false;
+                    appController.clearSearch();
+                  }
+                  navController.setIndex(i);
+                },
                 onRecord: () => _handleRecord(
                   context,
                   appController,
@@ -144,10 +155,23 @@ class HomeShell extends StatelessWidget {
                 showFilters: appController.showFilters.value,
                 onToggleFilters: () => appController.showFilters.value =
                     !appController.showFilters.value,
-                onSettings: () => navController.setIndex(2),
+                onSettings: () {
+                  isSearching.value = false;
+                  appController.clearSearch();
+                  navController.setIndex(3);
+                },
                 insightsActions: index == 1
                     ? _buildInsightsActions(context, appController)
                     : null,
+                isSearching: isSearching.value,
+                searchQuery: appController.searchQuery.value,
+                onSearchChanged: (q) => appController.searchQuery.value = q,
+                onSearchToggle: () {
+                  isSearching.value = !isSearching.value;
+                  if (!isSearching.value) {
+                    appController.clearSearch();
+                  }
+                },
               ),
             );
           } else {
@@ -155,13 +179,28 @@ class HomeShell extends StatelessWidget {
               index: index,
               title: _titleForIndex(index),
               body: bodyContent,
-              onSelect: navController.setIndex,
+              onSelect: (i) {
+                if (i != 0) {
+                  isSearching.value = false;
+                  appController.clearSearch();
+                }
+                navController.setIndex(i);
+              },
               onRecord: () => _handleRecord(
                 context,
                 appController,
                 recordController,
                 navController,
               ),
+              isSearching: isSearching.value,
+              searchQuery: appController.searchQuery.value,
+              onSearchChanged: (q) => appController.searchQuery.value = q,
+              onSearchToggle: () {
+                isSearching.value = !isSearching.value;
+                if (!isSearching.value) {
+                  appController.clearSearch();
+                }
+              },
               actions: index == 0
                   ? _buildHomeActions(context, appController)
                   : index == 1
@@ -181,7 +220,7 @@ class HomeShell extends StatelessWidget {
     final hasNotes = controller.notes.isNotEmpty;
     return [
       IconButton(
-        icon: const FaIcon(FontAwesomeIcons.penToSquare, size: 18),
+        icon: const Icon(FeatherIcons.edit2, size: 18),
         onPressed: () async {
           final note = await controller.createEmptyNote();
           if (context.mounted) {
@@ -191,11 +230,21 @@ class HomeShell extends StatelessWidget {
       ),
       if (hasNotes) ...[
         IconButton(
-          icon: const FaIcon(FontAwesomeIcons.magnifyingGlass, size: 18),
-          onPressed: () {},
+          icon: Icon(
+            isSearching.value
+                ? FeatherIcons.x
+                : FeatherIcons.search,
+            size: 18,
+          ),
+          onPressed: () {
+            isSearching.value = !isSearching.value;
+            if (!isSearching.value) {
+              controller.clearSearch();
+            }
+          },
         ),
         PopupMenuButton<String>(
-          icon: const FaIcon(FontAwesomeIcons.arrowDownWideShort, size: 18),
+          icon: const Icon(FeatherIcons.filter, size: 18),
           onSelected: (value) {
             if (['day', 'week', 'month'].contains(value)) {
               controller.groupBy.value = value;
@@ -206,10 +255,7 @@ class HomeShell extends StatelessWidget {
           itemBuilder: (context) => [
             const PopupMenuItem(
               enabled: false,
-              child: Text(
-                'SORT BY',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-              ),
+              child: Text('SORT BY', style: TextStyle()),
             ),
             const PopupMenuItem(value: 'newest', child: Text('Newest')),
             const PopupMenuItem(value: 'oldest', child: Text('Oldest')),
@@ -220,10 +266,7 @@ class HomeShell extends StatelessWidget {
             const PopupMenuDivider(),
             const PopupMenuItem(
               enabled: false,
-              child: Text(
-                'GROUP BY',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-              ),
+              child: Text('GROUP BY', style: TextStyle()),
             ),
             const PopupMenuItem(value: 'day', child: Text('Day')),
             const PopupMenuItem(value: 'week', child: Text('Week')),
@@ -241,12 +284,12 @@ class HomeShell extends StatelessWidget {
   ) {
     return [
       IconButton(
-        icon: const FaIcon(FontAwesomeIcons.tag, size: 18),
+        icon: const Icon(FeatherIcons.tag, size: 18),
         onPressed: () => showInsightsBucketDialog(context, controller),
         tooltip: 'Buckets',
       ),
       IconButton(
-        icon: const FaIcon(FontAwesomeIcons.clockRotateLeft, size: 18),
+        icon: const Icon(FeatherIcons.clock, size: 18),
         onPressed: () => showInsightsHistoryDialog(context, controller),
         tooltip: 'History',
       ),
@@ -262,7 +305,7 @@ class HomeShell extends StatelessWidget {
                   height: 18,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : const FaIcon(FontAwesomeIcons.arrowsRotate, size: 18),
+              : const Icon(FeatherIcons.refreshCw, size: 18),
           tooltip: 'Update Insights',
         ),
       ),
@@ -276,13 +319,13 @@ class HomeShell extends StatelessWidget {
       children: [
         IconButton(
           onPressed: () => showInsightsBucketDialog(context, controller),
-          icon: const FaIcon(FontAwesomeIcons.tag, size: 18),
+          icon: const Icon(FeatherIcons.tag, size: 18),
           tooltip: 'Buckets',
         ),
         const SizedBox(width: 8),
         IconButton(
           onPressed: () => showInsightsHistoryDialog(context, controller),
-          icon: const FaIcon(FontAwesomeIcons.clockRotateLeft, size: 18),
+          icon: const Icon(FeatherIcons.clock, size: 18),
           tooltip: 'History',
         ),
         const SizedBox(width: 8),
@@ -297,7 +340,7 @@ class HomeShell extends StatelessWidget {
                     height: 18,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const FaIcon(FontAwesomeIcons.arrowsRotate, size: 18),
+                : const Icon(FeatherIcons.refreshCw, size: 18),
             tooltip: 'Update Insights',
           ),
         ),
@@ -346,11 +389,7 @@ class _RecordingIndicator extends StatelessWidget {
           const SizedBox(width: 16),
           Text(
             formatDuration(elapsed),
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-            ),
+            style: const TextStyle(color: Colors.white),
           ),
           const SizedBox(width: 16),
           SizedBox(

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:flutter_feather_icons/flutter_feather_icons.dart';
 import '../../services/firebase_service.dart';
 import '../../services/sync_service.dart';
 import '../../services/toast_service.dart';
@@ -134,23 +134,17 @@ class _AuthScreenState extends State<AuthScreen>
                     color: theme.colorScheme.primary.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: FaIcon(
-                    FontAwesomeIcons.userShield,
+                  child: Icon(
+                    FeatherIcons.shield,
                     size: 40,
                     color: theme.colorScheme.primary,
                   ),
                 ),
                 const SizedBox(height: 32),
-                Text(
-                  'Fikr Cloud',
-                  style: theme.textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: -1,
-                  ),
-                ),
+                Text('Fikr Cloud', style: theme.textTheme.headlineMedium),
                 const SizedBox(height: 8),
                 Text(
-                  'Securely sync your thoughts across devices',
+                  'Keep your notes on all your devices',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),

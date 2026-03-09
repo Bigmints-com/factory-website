@@ -110,7 +110,12 @@ class FirebaseService {
   Future<User?> signInWithGoogle() async {
     try {
       final googleSignIn = GoogleSignIn.instance;
-      await googleSignIn.initialize();
+      await googleSignIn.initialize(
+        clientId:
+            '69536493117-o73gr11kiur6up4emvfgfhrufkr69ml5.apps.googleusercontent.com',
+        serverClientId:
+            '69536493117-o73gr11kiur6up4emvfgfhrufkr69ml5.apps.googleusercontent.com',
+      );
       await googleSignIn.authenticate();
 
       // Get authorization tokens for Firebase credential
@@ -324,13 +329,13 @@ class FirebaseService {
         .doc(uid)
         .snapshots()
         .map((snap) {
-      if (!snap.exists) return SubscriptionTier.free;
-      final tierStr = snap.data()?['plan'] as String?;
-      return SubscriptionTier.values.firstWhere(
-        (t) => t.name == tierStr,
-        orElse: () => SubscriptionTier.free,
-      );
-    });
+          if (!snap.exists) return SubscriptionTier.free;
+          final tierStr = snap.data()?['plan'] as String?;
+          return SubscriptionTier.values.firstWhere(
+            (t) => t.name == tierStr,
+            orElse: () => SubscriptionTier.free,
+          );
+        });
   }
 
   /// Analyze transcript using Gemini Flash
