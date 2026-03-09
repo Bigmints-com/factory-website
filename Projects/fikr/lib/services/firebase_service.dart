@@ -12,7 +12,7 @@ import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
-import '../controllers/subscription_controller.dart';
+import '../models/subscription_tier.dart';
 
 class FirebaseService {
   static final FirebaseService _instance = FirebaseService._internal();
