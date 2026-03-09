@@ -33,6 +33,8 @@ class FirebaseService {
   Future<void> initialize() async {
     if (_initialized) return;
 
+    // Pre-populate synchronously to avoid null window on app start
+    currentUser.value = _auth.currentUser;
     // Bind auth state
     currentUser.bindStream(_auth.authStateChanges());
 
