@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:file_selector/file_selector.dart';
@@ -12,12 +13,15 @@ import 'subscription_controller.dart';
 
 import '../models/analysis_result.dart';
 import '../models/app_config.dart';
+import '../models/llm_provider.dart';
 import '../models/note.dart';
 import '../services/openai_service.dart';
 import '../services/storage_service.dart';
 import '../services/toast_service.dart';
 import '../services/sync_service.dart';
 import '../services/firebase_service.dart';
+import '../services/widget_service.dart';
+import '../widgets/ai_data_consent_dialog.dart';
 import 'theme_controller.dart';
 import 'package:flutter/material.dart';
 
@@ -56,11 +60,13 @@ class AppController extends GetxController {
   final RxString selectedBucket = 'All'.obs;
   final RxString sortOrder = 'newest'.obs;
   final RxString groupBy = 'day'.obs;
-  final RxBool showFilters = true.obs;
+  final RxBool showFilters = false.obs;
+  final RxString searchQuery = ''.obs;
   final RxBool loading = false.obs;
   final RxBool canRecord = false.obs;
   final RxString errorMessage = ''.obs;
   final RxList<TodoItem> todoItems = <TodoItem>[].obs;
+  final RxList<ReminderItem> reminders = <ReminderItem>[].obs;
   final RxList<InsightEdition> insightEditions = <InsightEdition>[].obs;
   final Rx<GeneratedInsights?> generatedInsights = Rx<GeneratedInsights?>(null);
   final RxBool insightsUpdating = false.obs;
@@ -68,11 +74,22 @@ class AppController extends GetxController {
   final RxList<String> selectedInsightBuckets = <String>[].obs;
 
   List<Note> get filteredNotes {
-    final filtered = selectedBucket.value == 'All'
+    var filtered = selectedBucket.value == 'All'
         ? notes.toList()
         : notes.where((note) {
             return note.bucket == selectedBucket.value;
           }).toList();
+
+    final query = searchQuery.value.trim().toLowerCase();
+    if (query.isNotEmpty) {
+      filtered = filtered.where((note) {
+        return note.title.toLowerCase().contains(query) ||
+            note.text.toLowerCase().contains(query) ||
+            note.transcript.toLowerCase().contains(query) ||
+            note.bucket.toLowerCase().contains(query) ||
+            note.topics.any((t) => t.toLowerCase().contains(query));
+      }).toList();
+    }
 
     filtered.sort((a, b) {
       switch (sortOrder.value) {
@@ -86,6 +103,10 @@ class AppController extends GetxController {
       }
     });
     return filtered;
+  }
+
+  void clearSearch() {
+    searchQuery.value = '';
   }
 
   Future<void> initialize() async {
@@ -140,8 +161,13 @@ class AppController extends GetxController {
     }
 
     insightEditions.value = await storage.loadInsightEditions();
-    _seedTodoItemsIfEmpty();
-    await _updateCanRecord();
+    todoItems.value = await storage.loadTasks();
+    reminders.value = await storage.loadReminders();
+    if (todoItems.isEmpty) {
+      todoItems.value = _extractActionItems(notes);
+      await _saveTasks();
+    }
+    await refreshCanRecord();
 
     // Initialize synchronization if enabled by subscription
     if (subscription.canSync) {
@@ -153,7 +179,7 @@ class AppController extends GetxController {
     await storage.saveConfig(next);
     config.value = next;
     errorMessage.value = '';
-    await _updateCanRecord();
+    await refreshCanRecord();
   }
 
   Future<void> saveActiveModel(String model, {required bool isChat}) async {
@@ -163,7 +189,7 @@ class AppController extends GetxController {
     await updateConfig(next);
   }
 
-  Future<void> _updateCanRecord() async {
+  Future<void> refreshCanRecord() async {
     final provider = config.value.activeProvider;
 
     debugPrint(
@@ -229,6 +255,9 @@ class AppController extends GetxController {
       errorMessage.value = 'No provider configured. Go to Settings.';
       return;
     }
+
+    // Ensure user has consented to AI data sharing (App Store 5.1.1 / 5.1.2)
+    if (!await _ensureAIConsent(provider)) return;
 
     // Check for Managed AI (Pro/Pro+)
     if (subscription.hasManagedVertexAI) {
@@ -371,7 +400,9 @@ class AppController extends GetxController {
       id: id,
       createdAt: timestamp,
       updatedAt: timestamp,
-      title: analysis.intent.isNotEmpty ? analysis.intent : 'Untitled Note',
+      title: analysis.intent.isNotEmpty
+          ? analysis.intent
+          : _generateFallbackTitle(transcript),
       text: cleanedText,
       transcript: transcript,
       intent: analysis.intent,
@@ -382,7 +413,30 @@ class AppController extends GetxController {
     );
     notes.insert(0, note);
     await saveNotes();
-    _seedTodoItemsIfEmpty();
+    // Notify native widget of the latest note.
+    unawaited(
+      WidgetService.updateLastNote(
+        note.title.isNotEmpty ? note.title : note.snippet,
+      ),
+    );
+  }
+
+  /// Generates a short, meaningful title from the first few words of a transcript.
+  String _generateFallbackTitle(String transcript) {
+    final trimmed = transcript.trim();
+    if (trimmed.isEmpty) return 'Voice Note';
+
+    final words = trimmed.split(RegExp(r'\s+'));
+    const maxWords = 8;
+    final snippet = words.take(maxWords).join(' ');
+    final title = snippet.length > 50
+        ? '${snippet.substring(0, 50)}…'
+        : snippet;
+    final ellipsis = words.length > maxWords ? '…' : '';
+
+    // Capitalize first letter
+    final result = '$title$ellipsis';
+    return result[0].toUpperCase() + result.substring(1);
   }
 
   Future<String> _persistAudio(File tempAudioFile, String id) async {
@@ -408,7 +462,6 @@ class AppController extends GetxController {
     if (index == -1) return;
     notes[index] = updated;
     await saveNotes();
-    _seedTodoItemsIfEmpty();
   }
 
   Future<void> archiveNote(String id) async {
@@ -438,8 +491,6 @@ class AppController extends GetxController {
         }
       } catch (_) {}
     }
-    _seedTodoItemsIfEmpty();
-
     // Delete from Firestore so it won't come back on sync
     if (subscription.canSync) {
       Get.find<SyncService>().deleteNoteFromCloud(id);
@@ -510,17 +561,26 @@ class AppController extends GetxController {
     return exportDir.path;
   }
 
+  /// Reloads all in-memory data from local storage.
+  /// Called by SyncService after a sync operation completes.
+  Future<void> reloadAllData() async {
+    notes.value = (await storage.loadNotes())
+        .where((note) => !note.archived)
+        .toList();
+    insightEditions.value = await storage.loadInsightEditions();
+    todoItems.value = await storage.loadTasks();
+    reminders.value = await storage.loadReminders();
+  }
+
   Future<void> clearAll() async {
     await storage.clearAll();
     notes.clear();
-    _seedTodoItemsIfEmpty();
   }
 
   Future<void> loadMockNotes() async {
     final seeded = _buildMockNotes();
     notes.value = seeded;
     await saveNotes();
-    _seedTodoItemsIfEmpty();
   }
 
   LocalInsights buildLocalInsights(List<Note> notes) {
@@ -537,16 +597,32 @@ class AppController extends GetxController {
     );
   }
 
-  void cycleTodoStatus(String id) {
+  void toggleTaskComplete(String id) {
     todoItems.value = todoItems.map((item) {
       if (item.id != id) return item;
-      final nextStatus = item.status == 'todo'
-          ? 'doing'
-          : item.status == 'doing'
-          ? 'done'
-          : 'todo';
-      return item.copyWith(status: nextStatus);
+      if (item.isCompleted) {
+        return item.copyWith(status: 'todo', clearCompletedAt: true);
+      } else {
+        return item.copyWith(status: 'done', completedAt: DateTime.now());
+      }
     }).toList();
+    _saveTasks();
+  }
+
+  void dismissReminder(String id) {
+    reminders.value = reminders.map((item) {
+      if (item.id != id) return item;
+      return item.copyWith(isDismissed: true);
+    }).toList();
+    _saveReminders();
+  }
+
+  Future<void> _saveTasks() async {
+    await storage.saveTasks(todoItems.toList());
+  }
+
+  Future<void> _saveReminders() async {
+    await storage.saveReminders(reminders.toList());
   }
 
   Future<void> captureInsightsEdition() async {
@@ -565,6 +641,9 @@ class AppController extends GetxController {
         _notifyError('Missing API key.');
         return;
       }
+
+      // Ensure user has consented to AI data sharing
+      if (!await _ensureAIConsent(provider)) return;
 
       insightsUpdateStatus.value = 'Analyzing your notes...';
       final activeBuckets = selectedInsightBuckets.toList();
@@ -590,29 +669,37 @@ class AppController extends GetxController {
           .toList();
 
       insightsUpdateStatus.value = 'Synthesizing themes...';
+      final existingTitles = todoItems.map((t) => t.title).toList();
       final generated = await openAI.generateInsights(
         notes: payloadNotes,
         provider: provider,
         model: config.value.analysisModel,
         apiKey: apiKey,
         buckets: activeBuckets,
+        existingTaskTitles: existingTitles,
       );
 
       insightsUpdateStatus.value = 'Generating insights...';
       generatedInsights.value = generated;
 
-      if (generated.nextSteps.isNotEmpty) {
-        todoItems.value = generated.nextSteps
+      if (generated.llmTasks.isNotEmpty) {
+        _mergeGeneratedTasks(generated.llmTasks);
+      } else if (generated.nextSteps.isNotEmpty) {
+        // Fallback: convert nextSteps strings into tasks
+        final fallbackTasks = generated.nextSteps
             .take(5)
             .map(
-              (step) => TodoItem(
-                id: 'llm-${DateTime.now().microsecondsSinceEpoch}-$step',
-                title: step,
-                source: 'LLM insight',
-                status: 'todo',
-              ),
+              (step) => <String, dynamic>{
+                'title': step,
+                'source_note_title': 'LLM insight',
+              },
             )
             .toList();
+        _mergeGeneratedTasks(fallbackTasks);
+      }
+
+      if (generated.llmReminders.isNotEmpty) {
+        _mergeGeneratedReminders(generated.llmReminders);
       }
 
       insightsUpdateStatus.value = 'Saving this edition...';
@@ -650,6 +737,23 @@ class AppController extends GetxController {
     // No longer expanding buckets automatically
   }
 
+  /// Checks whether the user has consented to AI data sharing.
+  /// If not, shows the consent dialog. Returns `true` if consent was given.
+  Future<bool> _ensureAIConsent(LLMProvider provider) async {
+    final hasConsent = await storage.hasAIDataConsent();
+    if (hasConsent) return true;
+
+    final ctx = Get.context;
+    if (ctx == null || !ctx.mounted) return false;
+
+    final agreed = await AIDataConsentDialog.show(ctx, provider: provider);
+    if (agreed) {
+      await storage.setAIDataConsent(true);
+      return true;
+    }
+    return false;
+  }
+
   void _notifyError(String message) {
     errorMessage.value = message;
     if (Get.context != null) {
@@ -661,9 +765,91 @@ class AppController extends GetxController {
     }
   }
 
-  void _seedTodoItemsIfEmpty() {
-    if (todoItems.isNotEmpty) return;
-    todoItems.value = _extractActionItems(notes);
+  void _mergeGeneratedTasks(List<Map<String, dynamic>> llmTasks) {
+    final existingTitles = todoItems
+        .map((t) => t.title.trim().toLowerCase())
+        .toSet();
+
+    for (final taskData in llmTasks) {
+      final title = (taskData['title'] as String? ?? '').trim();
+      if (title.isEmpty) continue;
+
+      final normalizedTitle = title.toLowerCase();
+
+      // Check for duplicate by title similarity
+      final isDuplicate = existingTitles.any((existing) {
+        return existing == normalizedTitle ||
+            _similarEnough(existing, normalizedTitle);
+      });
+
+      if (isDuplicate) {
+        // Check if a matching completed task should be reopened
+        final matchIndex = todoItems.indexWhere(
+          (t) =>
+              t.isCompleted &&
+              _similarEnough(t.title.trim().toLowerCase(), normalizedTitle),
+        );
+        if (matchIndex != -1) {
+          todoItems[matchIndex] = todoItems[matchIndex].copyWith(
+            status: 'todo',
+            clearCompletedAt: true,
+          );
+        }
+        continue;
+      }
+
+      todoItems.add(
+        TodoItem(
+          id: 'llm-${DateTime.now().microsecondsSinceEpoch}-${todoItems.length}',
+          title: title,
+          source: taskData['source_note_title'] as String? ?? 'LLM insight',
+          status: 'todo',
+          description: taskData['description'] as String? ?? '',
+          createdAt: DateTime.now(),
+        ),
+      );
+      existingTitles.add(normalizedTitle);
+    }
+    _saveTasks();
+  }
+
+  void _mergeGeneratedReminders(List<Map<String, dynamic>> llmReminders) {
+    for (final data in llmReminders) {
+      final title = (data['title'] as String? ?? '').trim();
+      if (title.isEmpty) continue;
+
+      DateTime date;
+      try {
+        date = DateTime.parse(data['date'] as String);
+      } catch (_) {
+        date = DateTime.now();
+      }
+
+      // Avoid duplicate reminders
+      final exists = reminders.any(
+        (r) => r.title.toLowerCase() == title.toLowerCase(),
+      );
+      if (exists) continue;
+
+      reminders.add(
+        ReminderItem(
+          id: 'rem-${DateTime.now().microsecondsSinceEpoch}-${reminders.length}',
+          title: title,
+          date: date,
+          time: data['time'] as String?,
+        ),
+      );
+    }
+    _saveReminders();
+  }
+
+  bool _similarEnough(String a, String b) {
+    if (a == b) return true;
+    // Simple containment check for reasonable dedup
+    if (a.length > 10 && b.length > 10) {
+      return a.contains(b) || b.contains(a);
+    }
+    return false;
   }
 
   (List<String>, List<InsightIdeaNote>) _extractIdeas(List<Note> notes) {
@@ -725,6 +911,7 @@ class AppController extends GetxController {
               title: trimmed,
               source: note.title.isNotEmpty ? note.title : 'Note',
               status: 'todo',
+              createdAt: note.createdAt,
             ),
           );
         }

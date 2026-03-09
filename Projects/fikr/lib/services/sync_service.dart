@@ -95,19 +95,21 @@ class SyncService extends GetxService {
         debugPrint('Sync: First login — pushing local data to cloud.');
         await syncToCloud();
         await _prefs.write(key: _kLastSyncedUserKey, value: user.uid);
+        await _refreshAppController();
       } else if (lastSyncedUid == user.uid) {
         // ── Same account re-login: bidirectional merge ──────────
         debugPrint('Sync: Same account — merging.');
         await _syncBidirectional();
+        await _refreshAppController();
       } else {
         // ── Different account: clear local, pull new user's data ─
         debugPrint('Sync: Account switch — clearing local & pulling cloud.');
         await _clearLocalData();
+        await _refreshAppController(); // UI shows empty state
         await _pullCloudData(user.uid);
         await _prefs.write(key: _kLastSyncedUserKey, value: user.uid);
+        await _refreshAppController(); // UI shows cloud data
       }
-
-      _refreshAppController();
     } catch (e) {
       debugPrint('Sync Error: $e');
     } finally {
@@ -228,26 +230,14 @@ class SyncService extends GetxService {
     await _storage.saveInsightEditions([]);
     await _storage.saveTasks([]);
     await _storage.saveReminders([]);
-    _refreshAppController();
   }
 
   // ── Refresh in-memory AppController lists ──────────────────────────
 
-  void _refreshAppController() {
+  Future<void> _refreshAppController() async {
     try {
       final appController = Get.find<AppController>();
-      _storage.loadNotes().then((notes) {
-        appController.notes.value = notes.where((n) => !n.archived).toList();
-      });
-      _storage.loadInsightEditions().then((editions) {
-        appController.insightEditions.value = editions;
-      });
-      _storage.loadTasks().then((tasks) {
-        appController.todoItems.value = tasks;
-      });
-      _storage.loadReminders().then((reminders) {
-        appController.reminders.value = reminders;
-      });
+      await appController.reloadAllData();
     } catch (_) {
       // AppController may not be registered yet during startup
     }
