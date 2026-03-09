@@ -25,7 +25,7 @@ import '../widgets/ai_data_consent_dialog.dart';
 import 'theme_controller.dart';
 import 'package:flutter/material.dart';
 
-class AppController extends GetxController {
+class AppController extends GetxController with WidgetsBindingObserver {
   AppController({StorageService? storageService, LLMService? llmService})
     : storage = storageService ?? Get.find<StorageService>(),
       openAI = llmService ?? Get.find<LLMService>(),
@@ -168,6 +168,7 @@ class AppController extends GetxController {
       await _saveTasks();
     }
     await refreshCanRecord();
+    await _validateActiveProvider();
 
     // Initialize synchronization if enabled by subscription
     if (subscription.canSync) {
@@ -286,7 +287,6 @@ class AppController extends GetxController {
       );
 
       if (transcript.trim().isEmpty) {
-        loading.value = false;
         if (Get.context != null) {
           ToastService.showInfo(
             Get.context!,
@@ -461,6 +461,10 @@ class AppController extends GetxController {
     final index = notes.indexWhere((note) => note.id == updated.id);
     if (index == -1) return;
     notes[index] = updated;
+    notes.refresh();
+    if (selectedNote.value?.id == updated.id) {
+      selectedNote.value = updated;
+    }
     await saveNotes();
   }
 
@@ -575,6 +579,14 @@ class AppController extends GetxController {
   Future<void> clearAll() async {
     await storage.clearAll();
     notes.clear();
+    insightEditions.clear();
+    todoItems.clear();
+    reminders.clear();
+    selectedNote.value = null;
+    selectedBucket.value = 'All';
+    searchQuery.value = '';
+    errorMessage.value = '';
+    loading.value = false;
   }
 
   Future<void> loadMockNotes() async {
@@ -597,7 +609,7 @@ class AppController extends GetxController {
     );
   }
 
-  void toggleTaskComplete(String id) {
+  Future<void> toggleTaskComplete(String id) async {
     todoItems.value = todoItems.map((item) {
       if (item.id != id) return item;
       if (item.isCompleted) {
@@ -606,15 +618,15 @@ class AppController extends GetxController {
         return item.copyWith(status: 'done', completedAt: DateTime.now());
       }
     }).toList();
-    _saveTasks();
+    await _saveTasks();
   }
 
-  void dismissReminder(String id) {
+  Future<void> dismissReminder(String id) async {
     reminders.value = reminders.map((item) {
       if (item.id != id) return item;
       return item.copyWith(isDismissed: true);
     }).toList();
-    _saveReminders();
+    await _saveReminders();
   }
 
   Future<void> _saveTasks() async {
@@ -683,7 +695,7 @@ class AppController extends GetxController {
       generatedInsights.value = generated;
 
       if (generated.llmTasks.isNotEmpty) {
-        _mergeGeneratedTasks(generated.llmTasks);
+        await _mergeGeneratedTasks(generated.llmTasks);
       } else if (generated.nextSteps.isNotEmpty) {
         // Fallback: convert nextSteps strings into tasks
         final fallbackTasks = generated.nextSteps
@@ -695,11 +707,11 @@ class AppController extends GetxController {
               },
             )
             .toList();
-        _mergeGeneratedTasks(fallbackTasks);
+        await _mergeGeneratedTasks(fallbackTasks);
       }
 
       if (generated.llmReminders.isNotEmpty) {
-        _mergeGeneratedReminders(generated.llmReminders);
+        await _mergeGeneratedReminders(generated.llmReminders);
       }
 
       insightsUpdateStatus.value = 'Saving this edition...';
@@ -723,8 +735,17 @@ class AppController extends GetxController {
         highlights: highlights,
         buckets: activeBuckets,
       );
+      final snapshot = List<InsightEdition>.from(insightEditions);
       insightEditions.insert(0, edition);
-      await saveInsightEditions();
+      insightEditions.refresh();
+      try {
+        await saveInsightEditions();
+      } catch (e) {
+        insightEditions.value = snapshot;
+        insightEditions.refresh();
+        errorMessage.value = 'Failed to save insights: $e';
+        rethrow;
+      }
     } catch (error) {
       _notifyError(error.toString());
     } finally {
@@ -765,7 +786,7 @@ class AppController extends GetxController {
     }
   }
 
-  void _mergeGeneratedTasks(List<Map<String, dynamic>> llmTasks) {
+  Future<void> _mergeGeneratedTasks(List<Map<String, dynamic>> llmTasks) async {
     final existingTitles = todoItems
         .map((t) => t.title.trim().toLowerCase())
         .toSet();
@@ -810,10 +831,10 @@ class AppController extends GetxController {
       );
       existingTitles.add(normalizedTitle);
     }
-    _saveTasks();
+    await _saveTasks();
   }
 
-  void _mergeGeneratedReminders(List<Map<String, dynamic>> llmReminders) {
+  Future<void> _mergeGeneratedReminders(List<Map<String, dynamic>> llmReminders) async {
     for (final data in llmReminders) {
       final title = (data['title'] as String? ?? '').trim();
       if (title.isEmpty) continue;
@@ -840,7 +861,7 @@ class AppController extends GetxController {
         ),
       );
     }
-    _saveReminders();
+    await _saveReminders();
   }
 
   bool _similarEnough(String a, String b) {
@@ -1096,9 +1117,32 @@ class AppController extends GetxController {
   }
 
   @override
+  void onInit() {
+    super.onInit();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
   void onClose() {
+    WidgetsBinding.instance.removeObserver(this);
     _player.dispose();
     super.onClose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _validateActiveProvider();
+    }
+  }
+
+  Future<void> _validateActiveProvider() async {
+    final provider = config.value.activeProvider;
+    if (provider == null) return;
+    final key = await storage.getApiKey(provider.id);
+    if (key == null || key.isEmpty) {
+      canRecord.value = false;
+    }
   }
 }
 
