@@ -1,11 +1,18 @@
+import 'dart:convert';
+import 'dart:io';
+import 'dart:math';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:crypto/crypto.dart';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:firebase_ai/firebase_ai.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'dart:convert';
-import 'dart:io';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+
+import '../controllers/subscription_controller.dart';
 
 class FirebaseService {
   static final FirebaseService _instance = FirebaseService._internal();
@@ -125,6 +132,72 @@ class FirebaseService {
     }
   }
 
+  /// Generates a cryptographically secure random nonce.
+  String _generateNonce([int length = 32]) {
+    const charset =
+        '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
+    final random = Random.secure();
+    return List.generate(
+      length,
+      (_) => charset[random.nextInt(charset.length)],
+    ).join();
+  }
+
+  /// Returns the SHA-256 hash of [input].
+  String _sha256ofString(String input) {
+    final bytes = utf8.encode(input);
+    final digest = sha256.convert(bytes);
+    return digest.toString();
+  }
+
+  Future<User?> signInWithApple() async {
+    try {
+      final rawNonce = _generateNonce();
+      final nonce = _sha256ofString(rawNonce);
+
+      final appleCredential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+        nonce: nonce,
+      );
+
+      // Apple can return null identityToken on failure
+      if (appleCredential.identityToken == null) {
+        throw Exception('Apple Sign-In failed: no identity token received.');
+      }
+
+      final oauthCredential = OAuthProvider('apple.com').credential(
+        idToken: appleCredential.identityToken,
+        rawNonce: rawNonce,
+        accessToken: appleCredential.authorizationCode,
+      );
+
+      final userCredential = await _auth.signInWithCredential(oauthCredential);
+
+      // Apple only sends the name on the first sign-in; persist it.
+      final displayName = [
+        appleCredential.givenName,
+        appleCredential.familyName,
+      ].where((n) => n != null && n.isNotEmpty).join(' ');
+
+      if (displayName.isNotEmpty &&
+          (userCredential.user?.displayName == null ||
+              userCredential.user!.displayName!.isEmpty)) {
+        await userCredential.user?.updateDisplayName(displayName);
+      }
+
+      return userCredential.user;
+    } on FirebaseAuthException catch (e) {
+      debugPrint('Apple Sign-In Firebase error: ${e.code} – ${e.message}');
+      rethrow;
+    } catch (e) {
+      debugPrint('Error signing in with Apple: $e');
+      rethrow;
+    }
+  }
+
   Future<void> sendPasswordReset(String email) async {
     await _auth.sendPasswordResetEmail(email: email);
   }
@@ -136,7 +209,32 @@ class FirebaseService {
   Future<void> deleteAccount() async {
     final user = _auth.currentUser;
     if (user != null) {
-      await user.delete();
+      try {
+        final uid = user.uid;
+        final firestore = FirebaseFirestore.instance;
+        final userDoc = firestore.collection('users').doc(uid);
+
+        // Delete notes subcollection
+        final notes = await userDoc.collection('notes').get();
+        for (var doc in notes.docs) {
+          await doc.reference.delete();
+        }
+
+        // Delete insights subcollection
+        final insights = await userDoc.collection('insights').get();
+        for (var doc in insights.docs) {
+          await doc.reference.delete();
+        }
+
+        // Delete user document
+        await userDoc.delete();
+
+        // Finally delete the auth user
+        await user.delete();
+      } catch (e) {
+        debugPrint('Error deleting account: $e');
+        rethrow;
+      }
     }
   }
 
@@ -195,6 +293,42 @@ class FirebaseService {
       debugPrint('Vertex AI Transcription Error: $e');
       rethrow;
     }
+  }
+
+  /// Fetch the subscription tier for [uid] from Firestore (one-time read).
+  Future<SubscriptionTier> getUserSubscriptionTier(String uid) async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
+      if (!doc.exists) return SubscriptionTier.free;
+      final data = doc.data();
+      final tierStr = data?['plan'] as String?;
+      return SubscriptionTier.values.firstWhere(
+        (t) => t.name == tierStr,
+        orElse: () => SubscriptionTier.free,
+      );
+    } catch (e) {
+      debugPrint('Error fetching subscription tier: $e');
+      return SubscriptionTier.free;
+    }
+  }
+
+  /// Returns a stream of [SubscriptionTier] for [uid] that updates live.
+  Stream<SubscriptionTier> userTierStream(String uid) {
+    return FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .snapshots()
+        .map((snap) {
+      if (!snap.exists) return SubscriptionTier.free;
+      final tierStr = snap.data()?['plan'] as String?;
+      return SubscriptionTier.values.firstWhere(
+        (t) => t.name == tierStr,
+        orElse: () => SubscriptionTier.free,
+      );
+    });
   }
 
   /// Analyze transcript using Gemini Flash

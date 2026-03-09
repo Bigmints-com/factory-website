@@ -40,10 +40,16 @@ class SyncService extends GetxService {
 
     // React to plan changes (re-push user record)
     final subController = Get.find<SubscriptionController>();
-    ever(subController.currentTier, (tier) {
-      debugPrint('Sync: Plan changed → ${tier.name}');
-      if (FirebaseService().currentUser.value != null) {
-        _startSync();
+    ever(subController.currentTier, (tier) async {
+      try {
+        debugPrint('Sync: Plan changed → ${tier.name}');
+        if (subController.canSync) {
+          await _startSync();
+        } else {
+          debugPrint('Sync: Tier does not support sync, skipping.');
+        }
+      } catch (e) {
+        debugPrint('SyncService: tier change handler error: $e');
       }
     });
 
@@ -137,24 +143,42 @@ class SyncService extends GetxService {
         .map((d) => InsightEdition.fromJson(d.data()))
         .toList();
 
+    final cloudTasksSnap = await userRef.collection('tasks').get();
+    final cloudTasks = cloudTasksSnap.docs
+        .map((d) => TodoItem.fromJson(d.data()))
+        .toList();
+
+    final cloudRemindersSnap = await userRef.collection('reminders').get();
+    final cloudReminders = cloudRemindersSnap.docs
+        .map((d) => ReminderItem.fromJson(d.data()))
+        .toList();
+
     // Load local data
     final localNotes = await _storage.loadNotes();
     final localInsights = await _storage.loadInsightEditions();
+    final localTasks = await _storage.loadTasks();
+    final localReminders = await _storage.loadReminders();
 
     // Merge (newer wins)
     final mergedNotes = _mergeNotes(localNotes, cloudNotes);
     final mergedInsights = _mergeInsights(localInsights, cloudInsights);
+    final mergedTasks = _mergeTasks(localTasks, cloudTasks);
+    final mergedReminders = _mergeReminders(localReminders, cloudReminders);
 
     // Save merged locally
     await _storage.saveNotes(mergedNotes);
     await _storage.saveInsightEditions(mergedInsights);
+    await _storage.saveTasks(mergedTasks);
+    await _storage.saveReminders(mergedReminders);
 
     // Push merged to cloud
     await syncToCloud();
 
     debugPrint(
       'Sync: Merge complete. Notes: ${mergedNotes.length}, '
-      'Insights: ${mergedInsights.length}',
+      'Insights: ${mergedInsights.length}, '
+      'Tasks: ${mergedTasks.length}, '
+      'Reminders: ${mergedReminders.length}',
     );
   }
 
@@ -173,12 +197,26 @@ class SyncService extends GetxService {
         .map((d) => InsightEdition.fromJson(d.data()))
         .toList();
 
+    final cloudTasksSnap = await userRef.collection('tasks').get();
+    final cloudTasks = cloudTasksSnap.docs
+        .map((d) => TodoItem.fromJson(d.data()))
+        .toList();
+
+    final cloudRemindersSnap = await userRef.collection('reminders').get();
+    final cloudReminders = cloudRemindersSnap.docs
+        .map((d) => ReminderItem.fromJson(d.data()))
+        .toList();
+
     await _storage.saveNotes(cloudNotes);
     await _storage.saveInsightEditions(cloudInsights);
+    await _storage.saveTasks(cloudTasks);
+    await _storage.saveReminders(cloudReminders);
 
     debugPrint(
       'Sync: Pulled cloud data. Notes: ${cloudNotes.length}, '
-      'Insights: ${cloudInsights.length}',
+      'Insights: ${cloudInsights.length}, '
+      'Tasks: ${cloudTasks.length}, '
+      'Reminders: ${cloudReminders.length}',
     );
   }
 
@@ -188,6 +226,8 @@ class SyncService extends GetxService {
     debugPrint('Sync: Clearing local data for account switch.');
     await _storage.saveNotes([]);
     await _storage.saveInsightEditions([]);
+    await _storage.saveTasks([]);
+    await _storage.saveReminders([]);
     _refreshAppController();
   }
 
@@ -201,6 +241,12 @@ class SyncService extends GetxService {
       });
       _storage.loadInsightEditions().then((editions) {
         appController.insightEditions.value = editions;
+      });
+      _storage.loadTasks().then((tasks) {
+        appController.todoItems.value = tasks;
+      });
+      _storage.loadReminders().then((reminders) {
+        appController.reminders.value = reminders;
       });
     } catch (_) {
       // AppController may not be registered yet during startup
@@ -239,6 +285,36 @@ class SyncService extends GetxService {
     return merged.values.toList();
   }
 
+  List<TodoItem> _mergeTasks(List<TodoItem> local, List<TodoItem> cloud) {
+    final Map<String, TodoItem> merged = {};
+    for (final task in local) {
+      merged[task.id] = task;
+    }
+    for (final cloudTask in cloud) {
+      final existing = merged[cloudTask.id];
+      if (existing == null || cloudTask.createdAt.isAfter(existing.createdAt)) {
+        merged[cloudTask.id] = cloudTask;
+      }
+    }
+    return merged.values.toList();
+  }
+
+  List<ReminderItem> _mergeReminders(
+    List<ReminderItem> local,
+    List<ReminderItem> cloud,
+  ) {
+    final Map<String, ReminderItem> merged = {};
+    for (final reminder in local) {
+      merged[reminder.id] = reminder;
+    }
+    for (final cloudReminder in cloud) {
+      if (!merged.containsKey(cloudReminder.id)) {
+        merged[cloudReminder.id] = cloudReminder;
+      }
+    }
+    return merged.values.toList();
+  }
+
   // ── Public: push to cloud ──────────────────────────────────────────
 
   /// Delete a specific note from Firestore so it won't come back on sync.
@@ -268,8 +344,16 @@ class SyncService extends GetxService {
 
       debugPrint('SyncToCloud: Pushing data for ${user.uid}');
 
+      final subController = Get.find<SubscriptionController>();
+      if (!subController.canSync) {
+        debugPrint('SyncToCloud: Current tier does not support sync.');
+        return;
+      }
+
       final notes = await _storage.loadNotes();
       final insights = await _storage.loadInsightEditions();
+      final tasks = await _storage.loadTasks();
+      final reminders = await _storage.loadReminders();
       final config = await _storage.loadConfig();
 
       final batch = _firestore.batch();
@@ -293,8 +377,25 @@ class SyncService extends GetxService {
         );
       }
 
+      // Tasks
+      for (final task in tasks) {
+        batch.set(
+          userRef.collection('tasks').doc(task.id),
+          task.toJson(),
+          SetOptions(merge: true),
+        );
+      }
+
+      // Reminders
+      for (final reminder in reminders) {
+        batch.set(
+          userRef.collection('reminders').doc(reminder.id),
+          reminder.toJson(),
+          SetOptions(merge: true),
+        );
+      }
+
       // User document
-      final subController = Get.find<SubscriptionController>();
       batch.set(userRef, {
         'email': user.email,
         'plan': subController.currentTier.value.name,
