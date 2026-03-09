@@ -12,6 +12,10 @@ class MobileShell extends StatelessWidget {
     required this.onSelect,
     required this.onRecord,
     this.actions,
+    this.isSearching = false,
+    this.searchQuery = '',
+    this.onSearchChanged,
+    this.onSearchToggle,
   });
 
   final int index;
@@ -20,6 +24,10 @@ class MobileShell extends StatelessWidget {
   final ValueChanged<int> onSelect;
   final VoidCallback onRecord;
   final List<Widget>? actions;
+  final bool isSearching;
+  final String searchQuery;
+  final ValueChanged<String>? onSearchChanged;
+  final VoidCallback? onSearchToggle;
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +44,17 @@ class MobileShell extends StatelessWidget {
         elevation: 0,
         actions: actions,
       ),
-      body: body,
+      body: Column(
+        children: [
+          if (isSearching)
+            _MobileSearchBar(
+              query: searchQuery,
+              onChanged: onSearchChanged,
+              onClose: onSearchToggle,
+            ),
+          Expanded(child: body),
+        ],
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: index,
         onDestinationSelected: onSelect,
@@ -104,6 +122,86 @@ class MobileShell extends StatelessWidget {
           ),
         );
       }),
+    );
+  }
+}
+
+class _MobileSearchBar extends StatefulWidget {
+  const _MobileSearchBar({
+    required this.query,
+    required this.onChanged,
+    required this.onClose,
+  });
+
+  final String query;
+  final ValueChanged<String>? onChanged;
+  final VoidCallback? onClose;
+
+  @override
+  State<_MobileSearchBar> createState() => _MobileSearchBarState();
+}
+
+class _MobileSearchBarState extends State<_MobileSearchBar> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.query);
+  }
+
+  @override
+  void didUpdateWidget(covariant _MobileSearchBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.query != _controller.text) {
+      _controller.text = widget.query;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        border: Border(bottom: BorderSide(color: theme.dividerColor)),
+      ),
+      child: TextField(
+        controller: _controller,
+        autofocus: true,
+        decoration: InputDecoration(
+          hintText: 'Search notes...',
+          prefixIcon: const Icon(Icons.search, size: 20),
+          suffixIcon: IconButton(
+            icon: const Icon(Icons.close, size: 20),
+            onPressed: () {
+              _controller.clear();
+              widget.onChanged?.call('');
+              widget.onClose?.call();
+            },
+          ),
+          filled: true,
+          fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 12,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+        ),
+        onChanged: widget.onChanged,
+      ),
     );
   }
 }

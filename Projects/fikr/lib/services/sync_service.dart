@@ -23,7 +23,9 @@ class SyncService extends GetxService {
   final FlutterSecureStorage _prefs = const FlutterSecureStorage();
 
   final RxBool isSyncEnabled = false.obs;
-  bool _isSyncing = false;
+  final RxBool isSyncing = false.obs;
+  final Rx<DateTime?> lastSyncTime = Rx<DateTime?>(null);
+  final RxString syncError = ''.obs;
 
   @override
   void onInit() {
@@ -80,11 +82,11 @@ class SyncService extends GetxService {
   ///  • Different account          → clear local, pull cloud data
   ///  • First-ever login           → push local notes to cloud
   Future<void> _handleLogin(User user) async {
-    if (_isSyncing) {
+    if (isSyncing.value) {
       debugPrint('Sync: Already in progress, skipping.');
       return;
     }
-    _isSyncing = true;
+    isSyncing.value = true;
 
     try {
       final lastSyncedUid = await _prefs.read(key: _kLastSyncedUserKey);
@@ -110,10 +112,13 @@ class SyncService extends GetxService {
         await _prefs.write(key: _kLastSyncedUserKey, value: user.uid);
         await _refreshAppController(); // UI shows cloud data
       }
+      lastSyncTime.value = DateTime.now();
+      syncError.value = '';
     } catch (e) {
       debugPrint('Sync Error: $e');
+      syncError.value = e.toString();
     } finally {
-      _isSyncing = false;
+      isSyncing.value = false;
     }
   }
 
@@ -398,9 +403,12 @@ class SyncService extends GetxService {
       // Persist this user ID as the last synced account
       await _prefs.write(key: _kLastSyncedUserKey, value: user.uid);
 
+      lastSyncTime.value = DateTime.now();
+      syncError.value = '';
       debugPrint('SyncToCloud: Complete.');
     } catch (e) {
       debugPrint('SyncToCloud Error: $e');
+      syncError.value = e.toString();
       if (Get.context != null) {
         ToastService.showError(
           Get.context!,

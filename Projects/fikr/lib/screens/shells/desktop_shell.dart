@@ -19,6 +19,10 @@ class DesktopShell extends StatelessWidget {
     required this.onToggleFilters,
     required this.onSettings,
     this.insightsActions,
+    this.isSearching = false,
+    this.searchQuery = '',
+    this.onSearchChanged,
+    this.onSearchToggle,
   });
 
   final int index;
@@ -30,6 +34,10 @@ class DesktopShell extends StatelessWidget {
   final VoidCallback onToggleFilters;
   final VoidCallback onSettings;
   final Widget? insightsActions;
+  final bool isSearching;
+  final String searchQuery;
+  final ValueChanged<String>? onSearchChanged;
+  final VoidCallback? onSearchToggle;
 
   @override
   Widget build(BuildContext context) {
@@ -47,6 +55,10 @@ class DesktopShell extends StatelessWidget {
                 title: title,
                 showSettings: index != 2,
                 onSettings: onSettings,
+                isSearching: isSearching,
+                searchQuery: searchQuery,
+                onSearchChanged: onSearchChanged,
+                onSearchToggle: onSearchToggle,
                 actions: index == 0
                     ? [
                         IconButton(
@@ -72,12 +84,16 @@ class DesktopShell extends StatelessWidget {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               IconButton(
-                                onPressed: () {},
-                                icon: const FaIcon(
-                                  FontAwesomeIcons.magnifyingGlass,
+                                onPressed: onSearchToggle,
+                                icon: FaIcon(
+                                  isSearching
+                                      ? FontAwesomeIcons.xmark
+                                      : FontAwesomeIcons.magnifyingGlass,
                                   size: 18,
                                 ),
-                                tooltip: 'Search',
+                                tooltip: isSearching
+                                    ? 'Close Search'
+                                    : 'Search',
                               ),
                               IconButton(
                                 onPressed: onToggleFilters,
@@ -108,18 +124,53 @@ class DesktopShell extends StatelessWidget {
   }
 }
 
-class _DesktopTopBar extends StatelessWidget {
+class _DesktopTopBar extends StatefulWidget {
   const _DesktopTopBar({
     required this.title,
     required this.showSettings,
     required this.onSettings,
     this.actions,
+    this.isSearching = false,
+    this.searchQuery = '',
+    this.onSearchChanged,
+    this.onSearchToggle,
   });
 
   final String title;
   final bool showSettings;
   final VoidCallback onSettings;
   final List<Widget>? actions;
+  final bool isSearching;
+  final String searchQuery;
+  final ValueChanged<String>? onSearchChanged;
+  final VoidCallback? onSearchToggle;
+
+  @override
+  State<_DesktopTopBar> createState() => _DesktopTopBarState();
+}
+
+class _DesktopTopBarState extends State<_DesktopTopBar> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.searchQuery);
+  }
+
+  @override
+  void didUpdateWidget(covariant _DesktopTopBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.searchQuery != _controller.text) {
+      _controller.text = widget.searchQuery;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -133,10 +184,70 @@ class _DesktopTopBar extends StatelessWidget {
       alignment: Alignment.centerLeft,
       child: Row(
         children: [
-          Text(title, style: theme.textTheme.titleMedium),
+          Text(widget.title, style: theme.textTheme.titleMedium),
           const Spacer(),
-          if (actions != null) ...actions!,
+          if (widget.isSearching)
+            _ExpandingSearchField(
+              controller: _controller,
+              onChanged: widget.onSearchChanged,
+              onClose: () {
+                _controller.clear();
+                widget.onSearchChanged?.call('');
+                widget.onSearchToggle?.call();
+              },
+            ),
+          if (widget.actions != null) ...widget.actions!,
         ],
+      ),
+    );
+  }
+}
+
+class _ExpandingSearchField extends StatelessWidget {
+  const _ExpandingSearchField({
+    required this.controller,
+    required this.onChanged,
+    required this.onClose,
+  });
+
+  final TextEditingController controller;
+  final ValueChanged<String>? onChanged;
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeInOut,
+      width: 280,
+      height: 40,
+      margin: const EdgeInsets.only(right: 8),
+      child: TextField(
+        controller: controller,
+        autofocus: true,
+        style: theme.textTheme.bodyMedium,
+        decoration: InputDecoration(
+          hintText: 'Search notes...',
+          hintStyle: theme.textTheme.bodyMedium?.copyWith(
+            color: colorScheme.onSurface.withValues(alpha: 0.4),
+          ),
+          prefixIcon: const Icon(Icons.search, size: 18),
+          suffixIcon: IconButton(
+            icon: const Icon(Icons.close, size: 16),
+            onPressed: onClose,
+          ),
+          filled: true,
+          fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+          contentPadding: const EdgeInsets.symmetric(vertical: 8),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide.none,
+          ),
+        ),
+        onChanged: onChanged,
       ),
     );
   }
@@ -158,7 +269,7 @@ class _PrimarySidebar extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
-      width: 280,
+      width: 220,
       decoration: BoxDecoration(
         color: colorScheme.surface,
         border: Border(
@@ -185,7 +296,7 @@ class _PrimarySidebar extends StatelessWidget {
                   const Expanded(
                     child: Text(
                       'Fikr',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: TextStyle(),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
