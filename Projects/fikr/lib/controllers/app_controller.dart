@@ -351,7 +351,6 @@ class AppController extends GetxController with WidgetsBindingObserver {
       final transcript = await firebase.transcribeAudio(File(audioPath));
 
       if (transcript.trim().isEmpty) {
-        loading.value = false;
         if (Get.context != null) {
           ToastService.showInfo(
             Get.context!,
@@ -757,8 +756,8 @@ class AppController extends GetxController with WidgetsBindingObserver {
       } catch (e) {
         insightEditions.value = snapshot;
         insightEditions.refresh();
-        errorMessage.value = 'Failed to save insights: $e';
-        rethrow;
+        _notifyError('Failed to save insights. Please try again.');
+        return;
       }
     } catch (error) {
       _notifyError(error.toString());
@@ -1151,12 +1150,7 @@ class AppController extends GetxController with WidgetsBindingObserver {
   }
 
   Future<void> _validateActiveProvider() async {
-    final provider = config.value.activeProvider;
-    if (provider == null) return;
-    final key = await storage.getApiKey(provider.id);
-    if (key == null || key.isEmpty) {
-      canRecord.value = false;
-    }
+    await refreshCanRecord();
   }
 }
 
