@@ -571,6 +571,20 @@ class AppController extends GetxController with WidgetsBindingObserver {
     notes.value = (await storage.loadNotes())
         .where((note) => !note.archived)
         .toList();
+
+    // After reloading notes, check if selectedNote still exists in the list.
+    final selected = selectedNote.value;
+    if (selected != null) {
+      final refreshed = notes.firstWhereOrNull((n) => n.id == selected.id);
+      if (refreshed == null) {
+        // Note was deleted remotely — clear the selection.
+        selectedNote.value = null;
+      } else if (refreshed != selected) {
+        // Note was updated remotely — refresh the selected view.
+        selectedNote.value = refreshed;
+      }
+    }
+
     insightEditions.value = await storage.loadInsightEditions();
     todoItems.value = await storage.loadTasks();
     reminders.value = await storage.loadReminders();
