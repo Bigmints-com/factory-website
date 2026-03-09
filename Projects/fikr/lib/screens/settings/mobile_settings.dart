@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../controllers/app_controller.dart';
 import '../../models/llm_provider.dart';
 import '../../controllers/theme_controller.dart';
@@ -24,6 +25,7 @@ class MobileSettings extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _Section(
+            isCard: false,
             title: 'Theme',
             child: Obx(
               () => SegmentedButton<ThemeMode>(
@@ -33,10 +35,11 @@ class MobileSettings extends StatelessWidget {
                   ButtonSegment(value: ThemeMode.dark, label: Text('Dark')),
                 ],
                 selected: {themeController.themeMode.value},
-                onSelectionChanged: (s) {
+                onSelectionChanged: (s) async {
+                  if (s.isEmpty) return;
                   final mode = s.first;
                   themeController.setThemeMode(mode);
-                  controller.updateConfig(
+                  await controller.updateConfig(
                     controller.config.value.copyWith(themeMode: mode.name),
                   );
                 },
@@ -45,6 +48,7 @@ class MobileSettings extends StatelessWidget {
           ),
           const SizedBox(height: 32),
           _Section(
+            isCard: true,
             title: 'AI Provider',
             child: Obx(() {
               final provider = controller.config.value.activeProvider;
@@ -67,6 +71,7 @@ class MobileSettings extends StatelessWidget {
           ),
           const SizedBox(height: 32),
           _Section(
+            isCard: true,
             title: 'Account & Cloud Sync',
             child: Obx(() {
               final user = FirebaseService().currentUser.value;
@@ -121,6 +126,23 @@ class MobileSettings extends StatelessWidget {
                         }
                       },
                     ),
+                    const Divider(),
+                    ListTile(
+                      leading: Icon(
+                        Icons.person_remove_outlined,
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                      title: Text(
+                        'Delete Account',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                      ),
+                      subtitle: const Text(
+                        'Permanently remove your account and data',
+                      ),
+                      onTap: () => _showDeleteAccountDialog(context),
+                    ),
                   ],
                 );
               }
@@ -157,6 +179,7 @@ class MobileSettings extends StatelessWidget {
           ),
           const SizedBox(height: 32),
           _Section(
+            isCard: true,
             title: 'Data',
             child: Column(
               children: [
@@ -178,6 +201,75 @@ class MobileSettings extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+          const SizedBox(height: 32),
+          _Section(
+            isCard: true,
+            title: 'Legal',
+            child: Column(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.privacy_tip_outlined),
+                  title: const Text('Privacy Policy'),
+                  onTap: () => launchUrl(
+                    Uri.parse('https://fikr.bigmints.com/privacy'),
+                    mode: LaunchMode.externalApplication,
+                  ),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.description_outlined),
+                  title: const Text('Terms of Use'),
+                  onTap: () => launchUrl(
+                    Uri.parse('https://fikr.bigmints.com/terms'),
+                    mode: LaunchMode.externalApplication,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteAccountDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Account'),
+        content: const Text(
+          'Are you sure you want to delete your account? This will permanently delete all your data from the cloud. This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              try {
+                Navigator.pop(context);
+                await FirebaseService().deleteAccount();
+                if (context.mounted) {
+                  ToastService.showSuccess(
+                    context,
+                    title: 'Account Deleted',
+                    description: 'Your account and data have been removed.',
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ToastService.showError(
+                    context,
+                    title: 'Error',
+                    description:
+                        'Could not delete account. You might need to re-authenticate.',
+                  );
+                }
+              }
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
           ),
         ],
       ),
@@ -209,9 +301,14 @@ class MobileSettings extends StatelessWidget {
 }
 
 class _Section extends StatelessWidget {
-  const _Section({required this.title, required this.child});
+  const _Section({
+    required this.title,
+    required this.child,
+    required this.isCard,
+  });
   final String title;
   final Widget child;
+  final bool isCard;
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -220,23 +317,12 @@ class _Section extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(title, style: Theme.of(context).textTheme.titleSmall),
+            Text(title, style: Theme.of(context).textTheme.titleMedium),
           ],
         ),
         const SizedBox(height: 12),
         const SizedBox(height: 12),
-        Card(
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: BorderSide(
-              color: Theme.of(
-                context,
-              ).colorScheme.outline.withValues(alpha: 0.2),
-            ),
-          ),
-          child: child,
-        ),
+        isCard ? Card(child: child) : child,
       ],
     );
   }
