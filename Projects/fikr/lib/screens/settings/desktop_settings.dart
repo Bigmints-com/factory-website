@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../controllers/app_controller.dart';
 import '../../models/llm_provider.dart';
 import '../../controllers/theme_controller.dart';
@@ -49,8 +50,15 @@ class DesktopSettings extends StatelessWidget {
                         ),
                       ],
                       selected: {themeController.themeMode.value},
-                      onSelectionChanged: (s) =>
-                          themeController.setThemeMode(s.first),
+                      onSelectionChanged: (s) {
+                        final mode = s.first;
+                        themeController.setThemeMode(mode);
+                        controller.updateConfig(
+                          controller.config.value.copyWith(
+                            themeMode: mode.name,
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ),
@@ -148,6 +156,14 @@ class DesktopSettings extends StatelessWidget {
                             ),
                             child: const Text('Sign Out'),
                           ),
+                          const SizedBox(width: 12),
+                          TextButton(
+                            onPressed: () => _showDeleteAccountDialog(context),
+                            style: TextButton.styleFrom(
+                              foregroundColor: theme.colorScheme.error,
+                            ),
+                            child: const Text('Delete Account'),
+                          ),
                         ],
                       );
                     }
@@ -218,10 +234,83 @@ class DesktopSettings extends StatelessWidget {
                     ],
                   ),
                 ),
+                const SizedBox(height: 24),
+                _SettingItem(
+                  title: 'Legal',
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => launchUrl(
+                            Uri.parse('https://fikr.bigmints.com/privacy'),
+                            mode: LaunchMode.externalApplication,
+                          ),
+                          icon: const Icon(Icons.privacy_tip_outlined),
+                          label: const Text('Privacy Policy'),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => launchUrl(
+                            Uri.parse('https://fikr.bigmints.com/terms'),
+                            mode: LaunchMode.externalApplication,
+                          ),
+                          icon: const Icon(Icons.description_outlined),
+                          label: const Text('Terms of Use'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  void _showDeleteAccountDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Account'),
+        content: const Text(
+          'Are you sure you want to delete your account? This will permanently delete all your data from the cloud. This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              try {
+                Navigator.pop(context);
+                await FirebaseService().deleteAccount();
+                if (context.mounted) {
+                  ToastService.showSuccess(
+                    context,
+                    title: 'Account Deleted',
+                    description: 'Your account and data have been removed.',
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ToastService.showError(
+                    context,
+                    title: 'Error',
+                    description:
+                        'Could not delete account. You might need to re-authenticate.',
+                  );
+                }
+              }
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
       ),
     );
   }
