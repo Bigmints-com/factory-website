@@ -5,6 +5,7 @@ import '../../controllers/app_controller.dart';
 import '../../models/llm_provider.dart';
 import '../../services/openai_service.dart';
 import '../../services/toast_service.dart';
+import '../../widgets/ai_data_consent_dialog.dart';
 
 class ProviderDetailScreen extends StatefulWidget {
   final LLMProvider? provider;
@@ -116,6 +117,21 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
       // Save API Key
       await controller.storage.saveApiKey(id, _keyController.text.trim());
 
+      // Show AI data consent dialog before saving provider
+      final hasConsent = await controller.storage.hasAIDataConsent();
+      if (!hasConsent) {
+        if (!mounted) return;
+        final agreed = await AIDataConsentDialog.show(
+          context,
+          provider: newProvider,
+        );
+        if (!agreed) {
+          setState(() => _isLoading = false);
+          return;
+        }
+        await controller.storage.setAIDataConsent(true);
+      }
+
       // Update config — models are auto-set from provider type defaults
       final nextConfig = controller.config.value.copyWith(
         activeProvider: newProvider,
@@ -124,6 +140,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
       );
 
       await controller.updateConfig(nextConfig);
+      await controller.refreshCanRecord();
 
       if (mounted) {
         Get.back();
@@ -183,6 +200,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
 
       await controller.updateConfig(nextConfig);
       await controller.storage.deleteApiKey(id);
+      await controller.refreshCanRecord();
 
       if (mounted) {
         Get.back();
@@ -221,12 +239,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
             padding: const EdgeInsets.all(24),
             children: [
               // Provider type selector
-              Text(
-                'Provider',
-                style: theme.textTheme.labelLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              Text('Provider', style: theme.textTheme.labelLarge),
               const SizedBox(height: 12),
               ...LLMProviderType.values.map(
                 (type) => Padding(
@@ -234,7 +247,13 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                   child: _ProviderOption(
                     type: type,
                     isSelected: _selectedType == type,
-                    onTap: () => setState(() => _selectedType = type),
+                    onTap: () {
+                      setState(() {
+                        _selectedType = type;
+                        _keyController.clear();
+                      });
+                      _validate();
+                    },
                   ),
                 ),
               ),
@@ -242,12 +261,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
               const SizedBox(height: 32),
 
               // API Key
-              Text(
-                'API Key',
-                style: theme.textTheme.labelLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              Text('API Key', style: theme.textTheme.labelLarge),
               const SizedBox(height: 8),
               TextField(
                 controller: _keyController,
@@ -330,10 +344,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                         )
                       : Text(
                           widget.provider == null ? 'Save' : 'Update',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: const TextStyle(),
                         ),
                 ),
               ),
@@ -391,12 +402,7 @@ class _ProviderOption extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Text(
-              type.displayName,
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              ),
-            ),
+            Text(type.displayName, style: theme.textTheme.titleSmall),
             const Spacer(),
             if (isSelected)
               Icon(Icons.check_circle, color: colorScheme.primary, size: 20),
