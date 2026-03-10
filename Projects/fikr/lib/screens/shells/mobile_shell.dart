@@ -13,6 +13,7 @@ class MobileShell extends StatelessWidget {
     required this.onSelect,
     required this.onRecord,
     this.actions,
+    this.hideAppBar = false,
     this.isSearching = false,
     this.searchQuery = '',
     this.onSearchChanged,
@@ -25,6 +26,7 @@ class MobileShell extends StatelessWidget {
   final ValueChanged<int> onSelect;
   final VoidCallback onRecord;
   final List<Widget>? actions;
+  final bool hideAppBar;
   final bool isSearching;
   final String searchQuery;
   final ValueChanged<String>? onSearchChanged;
@@ -37,17 +39,19 @@ class MobileShell extends StatelessWidget {
     final recordController = Get.find<RecordController>();
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(title, style: theme.textTheme.titleMedium),
-        centerTitle: false,
-        backgroundColor: colorScheme.surface,
-        scrolledUnderElevation: 0,
-        elevation: 0,
-        actions: actions,
-      ),
+      appBar: hideAppBar
+          ? null
+          : AppBar(
+              title: Text(title, style: theme.textTheme.titleMedium),
+              centerTitle: false,
+              backgroundColor: colorScheme.surface,
+              scrolledUnderElevation: 0,
+              elevation: 0,
+              actions: actions,
+            ),
       body: Column(
         children: [
-          if (isSearching)
+          if (isSearching && !hideAppBar)
             _MobileSearchBar(
               query: searchQuery,
               onChanged: onSearchChanged,
@@ -56,49 +60,61 @@ class MobileShell extends StatelessWidget {
           Expanded(child: body),
         ],
       ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: colorScheme.surface,
-          border: Border(
-            top: BorderSide(
-              color: colorScheme.onSurface.withValues(alpha: 0.08),
-              width: 1,
+      bottomNavigationBar: BottomAppBar(
+        shape: const CircularNotchedRectangle(),
+        notchMargin: 8,
+        padding: EdgeInsets.zero,
+        height: 65,
+        color: colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border(
+              top: BorderSide(
+                color: colorScheme.onSurface.withValues(alpha: 0.08),
+                width: 1,
+              ),
             ),
           ),
-        ),
-        child: NavigationBar(
-          selectedIndex: index,
-          onDestinationSelected: onSelect,
-          height: 65,
-          elevation: 0,
-          backgroundColor: Colors.transparent,
-          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-          destinations: const [
-            NavigationDestination(
-              icon: Icon(FeatherIcons.fileText, size: 20),
-              selectedIcon: Icon(FeatherIcons.fileText, size: 20),
-              label: 'Notes',
-            ),
-            NavigationDestination(
-              icon: Icon(FeatherIcons.trendingUp, size: 20),
-              selectedIcon: Icon(FeatherIcons.trendingUp, size: 20),
-              label: 'Insights',
-            ),
-            NavigationDestination(
-              icon: Icon(FeatherIcons.checkSquare, size: 20),
-              selectedIcon: Icon(FeatherIcons.checkSquare, size: 20),
-              label: 'Tasks',
-            ),
-            NavigationDestination(
-              icon: Icon(FeatherIcons.settings, size: 20),
-              selectedIcon: Icon(FeatherIcons.settings, size: 20),
-              label: 'Settings',
-            ),
-          ],
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _NavItem(
+                icon: FeatherIcons.fileText,
+                label: 'Notes',
+                isSelected: index == 0,
+                onTap: () => onSelect(0),
+                colorScheme: colorScheme,
+              ),
+              _NavItem(
+                icon: FeatherIcons.trendingUp,
+                label: 'Insights',
+                isSelected: index == 1,
+                onTap: () => onSelect(1),
+                colorScheme: colorScheme,
+              ),
+              const SizedBox(width: 48), // FAB gap
+              _NavItem(
+                icon: FeatherIcons.checkSquare,
+                label: 'Tasks',
+                isSelected: index == 2,
+                onTap: () => onSelect(2),
+                colorScheme: colorScheme,
+              ),
+              _NavItem(
+                icon: FeatherIcons.settings,
+                label: 'Settings',
+                isSelected: index == 3,
+                onTap: () => onSelect(3),
+                colorScheme: colorScheme,
+              ),
+            ],
+          ),
         ),
       ),
 
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: Obx(() {
         final isRecording = recordController.isRecording.value;
         return SizedBox(
@@ -196,6 +212,54 @@ class _MobileSearchBarState extends State<_MobileSearchBar> {
           ),
         ),
         onChanged: widget.onChanged,
+      ),
+    );
+  }
+}
+
+// ── Nav Item ─────────────────────────────────────────────
+
+class _NavItem extends StatelessWidget {
+  const _NavItem({
+    required this.icon,
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+    required this.colorScheme,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final ColorScheme colorScheme;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = isSelected
+        ? colorScheme.primary
+        : colorScheme.onSurface.withValues(alpha: 0.45);
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 20, color: color),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                color: color,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
