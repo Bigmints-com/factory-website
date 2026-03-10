@@ -682,7 +682,18 @@ class AppController extends GetxController with WidgetsBindingObserver {
         return;
       }
 
-      final payloadNotes = filtered
+      // Filter out notes without meaningful content
+      final meaningful = filtered.where((note) {
+        final content = note.text.isNotEmpty ? note.text : note.transcript;
+        return content.trim().length >= 10;
+      }).toList();
+
+      if (meaningful.isEmpty) {
+        _notifyError('Your notes don\'t have enough content for analysis yet.');
+        return;
+      }
+
+      final payloadNotes = meaningful
           .map(
             (note) => {
               'title': note.title,
