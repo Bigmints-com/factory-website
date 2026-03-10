@@ -116,7 +116,7 @@ class _TopicMindMapState extends State<TopicMindMap>
         final screenH = constraints.maxHeight;
         final shorter = min(screenW, screenH);
 
-        const centerR = 36.0;
+        const centerR = 22.0;
         final baseOrbit = (shorter * 0.30).clamp(100.0, 200.0);
         final maxNotes = buckets.fold<int>(0, (m, e) => max(m, e.value.length));
         final minNotes = buckets.fold<int>(
@@ -245,7 +245,7 @@ class _TopicMindMapState extends State<TopicMindMap>
                       ),
                     ),
 
-                    // Center node
+                    // Center node with logo
                     Positioned(
                       left: cx - centerR,
                       top: cy - centerR,
@@ -254,14 +254,6 @@ class _TopicMindMapState extends State<TopicMindMap>
                         height: centerR * 2,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          gradient: const RadialGradient(
-                            colors: [
-                              Color(0xFF5EEAD4),
-                              Color(0xFF14B8A6),
-                              Color(0xFF0D9488),
-                            ],
-                            stops: [0.0, 0.5, 1.0],
-                          ),
                           boxShadow: [
                             BoxShadow(
                               color: const Color(
@@ -272,18 +264,14 @@ class _TopicMindMapState extends State<TopicMindMap>
                             ),
                           ],
                         ),
-                        child: const Center(
-                          child: Text(
-                            'fikr',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white,
-                              letterSpacing: 1.5,
-                              shadows: [
-                                Shadow(color: Colors.black26, blurRadius: 4),
-                              ],
-                            ),
+                        child: ClipOval(
+                          child: Image.asset(
+                            isDark
+                                ? 'assets/images/fikr-logo-dark.png'
+                                : 'assets/images/fikr-logo-light.png',
+                            width: centerR * 2,
+                            height: centerR * 2,
+                            fit: BoxFit.cover,
                           ),
                         ),
                       ),
