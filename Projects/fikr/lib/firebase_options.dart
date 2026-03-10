@@ -57,27 +57,31 @@ class DefaultFirebaseOptions {
     messagingSenderId: '69536493117',
     projectId: 'fikr-apps',
     storageBucket: 'fikr-apps.firebasestorage.app',
-    iosClientId: '69536493117-ikuuen4q38fq8f8rb4mn5ngeqk0birp4.apps.googleusercontent.com',
+    iosClientId:
+        '69536493117-ikuuen4q38fq8f8rb4mn5ngeqk0birp4.apps.googleusercontent.com',
     iosBundleId: 'com.bigmints.fikr',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyCnAddSxl7V3T6X3jeh6AGvf4zYGm_VJnU',
-    appId: '1:69536493117:ios:7606a7260da1c636918454',
-    messagingSenderId: '69536493117',
-    projectId: 'fikr-apps',
-    storageBucket: 'fikr-apps.firebasestorage.app',
-    iosBundleId: 'com.fikr.fikr',
-  );
-
-  static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyD5--E7OtwFbMRV8PFOlwnMHP6BAMFBWpA',
-    appId: '1:69536493117:web:4324ecabc81d6591918454',
+    apiKey: 'AIzaSyBSv_Z_PaXOk0HpTrM_PxoqFkK0SPQXIFw',
+    appId: '1:69536493117:web:545d15b5c440fbb9918454',
     messagingSenderId: '69536493117',
     projectId: 'fikr-apps',
     authDomain: 'fikr-apps.firebaseapp.com',
     storageBucket: 'fikr-apps.firebasestorage.app',
-    measurementId: 'G-0Z1JVYRWVM',
+    measurementId: 'G-2CPXKFNCF4',
+    iosClientId:
+        '69536493117-ikuuen4q38fq8f8rb4mn5ngeqk0birp4.apps.googleusercontent.com',
+    iosBundleId: 'com.bigmints.fikr',
   );
 
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyBSv_Z_PaXOk0HpTrM_PxoqFkK0SPQXIFw',
+    appId: '1:69536493117:web:545d15b5c440fbb9918454',
+    messagingSenderId: '69536493117',
+    projectId: 'fikr-apps',
+    authDomain: 'fikr-apps.firebaseapp.com',
+    storageBucket: 'fikr-apps.firebasestorage.app',
+    measurementId: 'G-2CPXKFNCF4',
+  );
 }

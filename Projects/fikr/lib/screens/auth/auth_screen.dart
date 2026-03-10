@@ -23,6 +23,7 @@ class _AuthScreenState extends State<AuthScreen>
   final _confirmPasswordController = TextEditingController();
 
   bool _isLoading = false;
+  bool _isResetLoading = false;
   bool _obscurePassword = true;
 
   @override
@@ -226,7 +227,25 @@ class _AuthScreenState extends State<AuthScreen>
                   setState(() => _obscurePassword = !_obscurePassword),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: _handleForgotPassword,
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Text(
+                'Forgot password?',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
             child: FilledButton(
@@ -359,5 +378,158 @@ class _AuthScreenState extends State<AuthScreen>
         fillColor: theme.colorScheme.surface,
       ),
     );
+  }
+
+  Future<void> _handleForgotPassword() async {
+    final resetEmailController = TextEditingController(
+      text: _emailController.text.trim(),
+    );
+
+    final sent = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        final colorScheme = Theme.of(ctx).colorScheme;
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              title: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: colorScheme.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      Icons.lock_reset,
+                      size: 20,
+                      color: colorScheme.primary,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text('Reset Password'),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Enter your email address and we\'ll send you a link to reset your password.',
+                    style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurface.withValues(alpha: 0.6),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  TextField(
+                    controller: resetEmailController,
+                    keyboardType: TextInputType.emailAddress,
+                    autofocus: true,
+                    decoration: InputDecoration(
+                      labelText: 'Email',
+                      prefixIcon: Icon(
+                        Icons.mail_outline,
+                        size: 20,
+                        color: colorScheme.onSurface.withValues(alpha: 0.4),
+                      ),
+                      filled: true,
+                      fillColor: colorScheme.onSurface.withValues(alpha: 0.04),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide(
+                          color: colorScheme.primary,
+                          width: 1.5,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(false),
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(
+                      color: colorScheme.onSurface.withValues(alpha: 0.5),
+                    ),
+                  ),
+                ),
+                FilledButton(
+                  onPressed: _isResetLoading
+                      ? null
+                      : () async {
+                          final email = resetEmailController.text.trim();
+                          if (email.isEmpty) return;
+
+                          setDialogState(() => _isResetLoading = true);
+                          try {
+                            await FirebaseService().sendPasswordReset(email);
+                            if (ctx.mounted) Navigator.of(ctx).pop(true);
+                          } catch (e) {
+                            if (ctx.mounted) {
+                              ScaffoldMessenger.of(ctx).showSnackBar(
+                                SnackBar(
+                                  content: Text(_friendlyResetError(e)),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          } finally {
+                            _isResetLoading = false;
+                          }
+                        },
+                  style: FilledButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: _isResetLoading
+                      ? const SizedBox(
+                          height: 18,
+                          width: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text('Send Reset Link'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (sent == true && mounted) {
+      ToastService.showSuccess(
+        context,
+        title: 'Email Sent',
+        description: 'Check your inbox for a password reset link.',
+      );
+    }
+  }
+
+  String _friendlyResetError(dynamic e) {
+    final msg = e.toString();
+    if (msg.contains('user-not-found')) {
+      return 'No account found with this email.';
+    }
+    if (msg.contains('invalid-email')) {
+      return 'Please enter a valid email address.';
+    }
+    if (msg.contains('too-many-requests')) {
+      return 'Too many requests. Please try again later.';
+    }
+    return 'Something went wrong. Please try again.';
   }
 }

@@ -9,6 +9,7 @@ import '../services/storage_service.dart';
 import '../utils/assets.dart';
 import 'home_shell.dart';
 import 'notification_permission_screen.dart';
+import 'settings/auth_screen.dart';
 import 'settings/widgets/provider_setup_dialog.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -82,7 +83,8 @@ class _OnboardingScreenState extends State<OnboardingScreen>
         curve: Curves.easeInOut,
       );
     } else {
-      _openProviderSetup();
+      // Last intro page → show choice screen
+      _showChoiceScreen();
     }
   }
 
@@ -93,24 +95,19 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     }
   }
 
-  void _openProviderSetup() async {
-    final success = await Navigator.of(context).push<bool>(
+  void _showChoiceScreen() {
+    Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => const ProviderSetupDialog(),
-        fullscreenDialog: true,
+        builder: (_) => _OnboardingChoiceScreen(
+          onComplete: () async {
+            await Get.find<StorageService>().setOnboardingComplete();
+            if (mounted) {
+              await _showNotificationPermission();
+            }
+          },
+        ),
       ),
     );
-
-    await Get.find<StorageService>().setOnboardingComplete();
-
-    // If key was set, refresh canRecord
-    if (success == true) {
-      Get.find<AppController>().refreshCanRecord();
-    }
-
-    if (mounted) {
-      await _showNotificationPermission();
-    }
   }
 
   Future<void> _showNotificationPermission() async {
@@ -265,6 +262,259 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     );
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Choice Screen: Fikr Cloud vs own API key
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _OnboardingChoiceScreen extends StatelessWidget {
+  const _OnboardingChoiceScreen({required this.onComplete});
+
+  final Future<void> Function() onComplete;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Scaffold(
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                children: [
+                  const SizedBox(height: 16),
+
+                  // Back button
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(FeatherIcons.arrowLeft),
+                    ),
+                  ),
+
+                  const Spacer(flex: 2),
+
+                  // Header
+                  Text(
+                    'How would you\nlike to start?',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.headlineMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'You can always change this later in settings.',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurface.withValues(alpha: 0.5),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  // ── Fikr Cloud Card ──
+                  _ChoiceCard(
+                    icon: FeatherIcons.cloud,
+                    iconGradient: [
+                      colorScheme.primary,
+                      colorScheme.primary.withValues(alpha: 0.7),
+                    ],
+                    title: 'Sign in to Fikr Cloud',
+                    subtitle:
+                        'Sync notes across devices, automatic backups, and managed AI.',
+                    buttonLabel: 'Sign In',
+                    buttonIcon: FeatherIcons.logIn,
+                    isHighlighted: true,
+                    accentColor: colorScheme.primary,
+                    onTap: () async {
+                      await AuthScreen.show(context);
+                      // After auth, complete onboarding
+                      await onComplete();
+                    },
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Divider
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Divider(
+                          color: colorScheme.onSurface.withValues(alpha: 0.1),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          'or',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurface.withValues(alpha: 0.4),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Divider(
+                          color: colorScheme.onSurface.withValues(alpha: 0.1),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // ── Own API Key Card ──
+                  _ChoiceCard(
+                    icon: FeatherIcons.key,
+                    iconGradient: [
+                      isDark
+                          ? const Color(0xFFF59E0B)
+                          : const Color(0xFFD97706),
+                      const Color(0xFFFBBF24),
+                    ],
+                    title: 'Use my own API key',
+                    subtitle:
+                        'Configure OpenAI or Gemini. Notes stay on your device.',
+                    buttonLabel: 'Set Up',
+                    buttonIcon: FeatherIcons.settings,
+                    isHighlighted: false,
+                    accentColor: isDark
+                        ? const Color(0xFFF59E0B)
+                        : const Color(0xFFD97706),
+                    onTap: () async {
+                      final success = await Navigator.of(context).push<bool>(
+                        MaterialPageRoute(
+                          builder: (_) => const ProviderSetupDialog(),
+                          fullscreenDialog: true,
+                        ),
+                      );
+                      if (success == true) {
+                        Get.find<AppController>().refreshCanRecord();
+                      }
+                      await onComplete();
+                    },
+                  ),
+
+                  const Spacer(flex: 3),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Choice Card Widget
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ChoiceCard extends StatelessWidget {
+  const _ChoiceCard({
+    required this.icon,
+    required this.iconGradient,
+    required this.title,
+    required this.subtitle,
+    required this.buttonLabel,
+    required this.buttonIcon,
+    required this.isHighlighted,
+    required this.accentColor,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final List<Color> iconGradient;
+  final String title;
+  final String subtitle;
+  final String buttonLabel;
+  final IconData buttonIcon;
+  final bool isHighlighted;
+  final Color accentColor;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isHighlighted
+              ? accentColor.withValues(alpha: 0.4)
+              : colorScheme.outline.withValues(alpha: 0.15),
+          width: isHighlighted ? 1.5 : 1,
+        ),
+        color: isHighlighted
+            ? accentColor.withValues(alpha: isDark ? 0.08 : 0.03)
+            : null,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              children: [
+                // Icon
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(colors: iconGradient),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: Colors.white, size: 20),
+                ),
+                const SizedBox(width: 16),
+                // Text
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurface.withValues(alpha: 0.6),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Icon(
+                  FeatherIcons.chevronRight,
+                  size: 18,
+                  color: colorScheme.onSurface.withValues(alpha: 0.3),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Data + Page Widgets
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _PageData {
   final IconData icon;

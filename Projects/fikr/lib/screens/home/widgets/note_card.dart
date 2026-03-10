@@ -31,27 +31,7 @@ class NoteCard extends StatelessWidget {
       child: GestureDetector(
         onTap: onTap,
         child: Container(
-          decoration: BoxDecoration(
-            color: isDark ? AppPalette.surfaceDark : Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: isDark
-                ? null
-                : const [
-                    BoxShadow(
-                      color: Color(0x0F000000), // rgba(0,0,0,0.06)
-                      blurRadius: 3,
-                      offset: Offset(0, 1),
-                    ),
-                    BoxShadow(
-                      color: Color(0x0D000000), // rgba(0,0,0,0.05)
-                      blurRadius: 16,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
-            border: isDark
-                ? Border.all(color: AppPalette.outlineDark, width: 1)
-                : null,
-          ),
+          decoration: AppPalette.cardDecoration(context),
           padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

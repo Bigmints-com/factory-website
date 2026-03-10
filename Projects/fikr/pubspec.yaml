@@ -51,7 +51,7 @@ dependencies:
   flutter_native_splash: ^2.3.16
   flutter_svg: ^2.0.10
   toastification: ^3.0.3
-  # in_app_purchase: ^3.2.3  # Temporarily disabled – re-enable in future release
+  # in_app_purchase: ^3.2.3  # Removed – using web-based payments (Stripe)
   firebase_core: ^4.3.0
   firebase_auth: ^6.1.3
   cloud_firestore: ^6.1.1
@@ -64,6 +64,8 @@ dependencies:
   crypto: ^3.0.6
   home_widget: ^0.7.0
   flutter_feather_icons: ^2.0.0+1
+  app_links: ^7.0.0
+  flutter_web_auth_2: ^5.0.1
 
 dev_dependencies:
   flutter_test:

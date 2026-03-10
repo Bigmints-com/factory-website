@@ -56,51 +56,46 @@ class MobileShell extends StatelessWidget {
           Expanded(child: body),
         ],
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: index,
-        onDestinationSelected: onSelect,
-        height: 65, // Slightly taller for better touch targets
-        elevation: 0,
-        backgroundColor: colorScheme.surface,
-        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-        destinations: [
-          NavigationDestination(
-            icon: const Icon(FeatherIcons.fileText, size: 20),
-            selectedIcon: const Icon(
-              FeatherIcons.file,
-              size: 20,
-              color: Colors.white,
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          border: Border(
+            top: BorderSide(
+              color: colorScheme.onSurface.withValues(alpha: 0.08),
+              width: 1,
             ),
-            label: 'Notes',
           ),
-          NavigationDestination(
-            icon: const Icon(FeatherIcons.trendingUp, size: 20),
-            selectedIcon: const Icon(
-              FeatherIcons.trendingUp,
-              size: 20,
-              color: Colors.white,
+        ),
+        child: NavigationBar(
+          selectedIndex: index,
+          onDestinationSelected: onSelect,
+          height: 65,
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+          destinations: const [
+            NavigationDestination(
+              icon: Icon(FeatherIcons.fileText, size: 20),
+              selectedIcon: Icon(FeatherIcons.fileText, size: 20),
+              label: 'Notes',
             ),
-            label: 'Insights',
-          ),
-          NavigationDestination(
-            icon: const Icon(FeatherIcons.checkSquare, size: 20),
-            selectedIcon: Icon(
-              FeatherIcons.checkSquare,
-              size: 20,
-              color: colorScheme.primary,
+            NavigationDestination(
+              icon: Icon(FeatherIcons.trendingUp, size: 20),
+              selectedIcon: Icon(FeatherIcons.trendingUp, size: 20),
+              label: 'Insights',
             ),
-            label: 'Tasks',
-          ),
-          NavigationDestination(
-            icon: const Icon(FeatherIcons.settings, size: 20),
-            selectedIcon: const Icon(
-              FeatherIcons.settings,
-              size: 20,
-              color: Colors.white,
+            NavigationDestination(
+              icon: Icon(FeatherIcons.checkSquare, size: 20),
+              selectedIcon: Icon(FeatherIcons.checkSquare, size: 20),
+              label: 'Tasks',
             ),
-            label: 'Settings',
-          ),
-        ],
+            NavigationDestination(
+              icon: Icon(FeatherIcons.settings, size: 20),
+              selectedIcon: Icon(FeatherIcons.settings, size: 20),
+              label: 'Settings',
+            ),
+          ],
+        ),
       ),
 
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,

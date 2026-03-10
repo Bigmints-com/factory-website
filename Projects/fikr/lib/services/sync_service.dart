@@ -89,6 +89,15 @@ class SyncService extends GetxService {
     isSyncing.value = true;
 
     try {
+      // Give SubscriptionController a moment to resolve the tier from
+      // Firestore so that syncToCloud() sees the correct plan. Without
+      // this, the tier is still the default (free) and the push is skipped.
+      final subController = Get.find<SubscriptionController>();
+      for (int i = 0; i < 10; i++) {
+        if (subController.canSync) break;
+        await Future.delayed(const Duration(milliseconds: 300));
+      }
+
       final lastSyncedUid = await _prefs.read(key: _kLastSyncedUserKey);
       debugPrint('Sync: Current=${user.uid}, LastSynced=$lastSyncedUid');
 

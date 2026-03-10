@@ -3,266 +3,436 @@ import 'package:flutter_feather_icons/flutter_feather_icons.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../controllers/app_controller.dart';
-import '../../models/llm_provider.dart';
+import '../../controllers/subscription_controller.dart';
 import '../../controllers/theme_controller.dart';
 import '../../services/firebase_service.dart';
 import '../../services/sync_service.dart';
 import '../../services/toast_service.dart';
-import 'auth_screen.dart';
+
 import 'provider_detail_screen.dart';
+import 'widgets/fikr_cloud_banner.dart';
 
 class DesktopSettings extends StatelessWidget {
   const DesktopSettings({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final controller = Get.find<AppController>();
     final themeController = Get.find<ThemeController>();
 
-    return SingleChildScrollView(
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 800),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Settings', style: theme.textTheme.headlineSmall),
-                const SizedBox(height: 32),
-                _SettingItem(
-                  title: 'Theme',
-                  child: Obx(
-                    () => SegmentedButton<ThemeMode>(
-                      segments: const [
-                        ButtonSegment(
-                          value: ThemeMode.system,
-                          label: Text('System'),
-                        ),
-                        ButtonSegment(
-                          value: ThemeMode.light,
-                          label: Text('Light'),
-                        ),
-                        ButtonSegment(
-                          value: ThemeMode.dark,
-                          label: Text('Dark'),
-                        ),
-                      ],
-                      selected: {themeController.themeMode.value},
-                      onSelectionChanged: (s) {
-                        final mode = s.first;
-                        themeController.setThemeMode(mode);
-                        controller.updateConfig(
-                          controller.config.value.copyWith(
-                            themeMode: mode.name,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                _SettingItem(
-                  title: 'AI Service',
-                  child: Obx(() {
-                    final provider = controller.config.value.activeProvider;
-                    if (provider == null) {
-                      return Card(
-                        child: ListTile(
-                          title: const Text('Not configured'),
-                          subtitle: const Text('Tap to get started'),
-                          trailing: const Icon(Icons.chevron_right),
-                          onTap: () =>
-                              Get.to(() => const ProviderDetailScreen()),
-                        ),
-                      );
-                    }
-                    return Card(
-                      child: ListTile(
-                        title: Text(provider.name),
-                        subtitle: Text(provider.type.displayName),
-                        onTap: () => Get.to(
-                          () => ProviderDetailScreen(provider: provider),
-                        ),
-                        trailing: const Icon(Icons.edit_outlined),
-                      ),
-                    );
-                  }),
-                ),
-                const SizedBox(height: 24),
-                _SettingItem(
-                  title: 'Account & Cloud Sync',
-                  child: Obx(() {
-                    final user = FirebaseService().currentUser.value;
-                    final isAnonymous = user?.isAnonymous ?? true;
-                    final isLoggedIn = user != null && !isAnonymous;
+    final theme = Theme.of(context);
 
-                    if (isLoggedIn) {
-                      return Row(
-                        children: [
-                          CircleAvatar(
-                            backgroundColor: theme.colorScheme.primaryContainer,
-                            child: Icon(
-                              FeatherIcons.user,
-                              size: 16,
-                              color: theme.colorScheme.primary,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+    return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
+      body: Obx(() {
+        final user = FirebaseService().currentUser.value;
+        final isAnonymous = user?.isAnonymous ?? true;
+        final isLoggedIn = user != null && !isAnonymous;
+
+        return SingleChildScrollView(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 480),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 40,
+                ),
+                child: Column(
+                  children: [
+                    // ── Header ──
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Settings',
+                        style: theme.textTheme.headlineSmall,
+                      ),
+                    ),
+
+                    const SizedBox(height: 32),
+
+                    // ── Fikr Cloud ──
+                    Obx(() {
+                      final user = FirebaseService().currentUser.value;
+                      final isAnonymous = user?.isAnonymous ?? true;
+                      final isLoggedIn = user != null && !isAnonymous;
+                      final sub = Get.find<SubscriptionController>();
+
+                      // Not signed in → show sign-in card
+                      if (!isLoggedIn) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _SectionHeader(title: 'Fikr Cloud'),
+                            const FikrCloudBanner(),
+                          ],
+                        );
+                      }
+
+                      // Signed in but free → account info + informational note
+                      if (sub.isFree) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _SectionHeader(title: 'Fikr Cloud'),
+                            _SettingsGroup(
                               children: [
-                                Text(
-                                  user.email ?? 'Signed In',
-                                  style: theme.textTheme.bodyMedium,
+                                Row(
+                                  children: [
+                                    CircleAvatar(
+                                      backgroundColor:
+                                          theme.colorScheme.primaryContainer,
+                                      child: Icon(
+                                        FeatherIcons.user,
+                                        size: 16,
+                                        color: theme.colorScheme.primary,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            user.email ?? 'Signed In',
+                                            style: theme.textTheme.bodyMedium,
+                                          ),
+                                          Text(
+                                            'Local storage only',
+                                            style: theme.textTheme.bodySmall
+                                                ?.copyWith(
+                                                  color: theme
+                                                      .colorScheme
+                                                      .onSurface
+                                                      .withValues(alpha: 0.6),
+                                                ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    TextButton(
+                                      onPressed: () async {
+                                        await FirebaseService().signOut();
+                                        if (context.mounted) {
+                                          ToastService.showSuccess(
+                                            context,
+                                            title: 'Signed Out',
+                                            description:
+                                                'You have been signed out.',
+                                          );
+                                        }
+                                      },
+                                      style: TextButton.styleFrom(
+                                        foregroundColor:
+                                            theme.colorScheme.error,
+                                      ),
+                                      child: const Text('Sign Out'),
+                                    ),
+                                  ],
                                 ),
-                                Text(
-                                  'Cloud sync enabled',
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.colorScheme.onSurface
-                                        .withValues(alpha: 0.6),
-                                  ),
-                                ),
+                                const SizedBox(height: 12),
+                                const FikrCloudNote(),
                               ],
                             ),
-                          ),
-                          OutlinedButton.icon(
-                            onPressed: () =>
-                                Get.find<SyncService>().syncToCloud(),
-                            icon: const Icon(
-                              FeatherIcons.uploadCloud,
-                              size: 14,
-                            ),
-                            label: const Text('Sync Now'),
-                          ),
-                          const SizedBox(width: 12),
-                          TextButton(
-                            onPressed: () async {
-                              await FirebaseService().signOut();
-                              if (context.mounted) {
-                                ToastService.showSuccess(
-                                  context,
-                                  title: 'Signed Out',
-                                  description: 'Cloud sync disabled.',
-                                );
-                              }
-                            },
-                            style: TextButton.styleFrom(
-                              foregroundColor: theme.colorScheme.error,
-                            ),
-                            child: const Text('Sign Out'),
-                          ),
-                          const SizedBox(width: 12),
-                          TextButton(
-                            onPressed: () => _showDeleteAccountDialog(context),
-                            style: TextButton.styleFrom(
-                              foregroundColor: theme.colorScheme.error,
-                            ),
-                            child: const Text('Delete Account'),
+                          ],
+                        );
+                      }
+
+                      // Signed in with subscription → full sync UI
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _SectionHeader(title: 'Fikr Cloud'),
+                          _SettingsGroup(
+                            children: [
+                              Row(
+                                children: [
+                                  CircleAvatar(
+                                    backgroundColor:
+                                        theme.colorScheme.primaryContainer,
+                                    child: Icon(
+                                      FeatherIcons.user,
+                                      size: 16,
+                                      color: theme.colorScheme.primary,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          user.email ?? 'Signed In',
+                                          style: theme.textTheme.bodyMedium,
+                                        ),
+                                        Text(
+                                          'Cloud sync enabled',
+                                          style: theme.textTheme.bodySmall
+                                              ?.copyWith(
+                                                color: theme
+                                                    .colorScheme
+                                                    .onSurface
+                                                    .withValues(alpha: 0.6),
+                                              ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  OutlinedButton.icon(
+                                    onPressed: () =>
+                                        Get.find<SyncService>().syncToCloud(),
+                                    icon: const Icon(
+                                      FeatherIcons.uploadCloud,
+                                      size: 14,
+                                    ),
+                                    label: const Text('Sync Now'),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  TextButton(
+                                    onPressed: () async {
+                                      await FirebaseService().signOut();
+                                      if (context.mounted) {
+                                        ToastService.showSuccess(
+                                          context,
+                                          title: 'Signed Out',
+                                          description: 'Cloud sync disabled.',
+                                        );
+                                      }
+                                    },
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: theme.colorScheme.error,
+                                    ),
+                                    child: const Text('Sign Out'),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  TextButton(
+                                    onPressed: () =>
+                                        _showDeleteAccountDialog(context),
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: theme.colorScheme.error,
+                                    ),
+                                    child: const Text('Delete Account'),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ],
                       );
-                    }
+                    }),
 
-                    return Column(
+                    const SizedBox(height: 36),
+
+                    // ── AI Service ──
+                    _SectionHeader(title: 'AI Service'),
+                    _SettingsGroup(
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: Text(
-                            'Sign in to back up your notes to the cloud and access them across devices.',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.onSurface.withValues(
-                                alpha: 0.6,
-                              ),
+                        Obx(() {
+                          final provider =
+                              controller.config.value.activeProvider;
+                          return _SettingsRow(
+                            icon: FeatherIcons.cpu,
+                            title: 'AI Provider',
+                            value: provider?.name ?? 'Not set',
+                            onTap: () => Get.to(
+                              () => ProviderDetailScreen(provider: provider),
                             ),
-                          ),
+                          );
+                        }),
+                      ],
+                    ),
+
+                    const SizedBox(height: 28),
+
+                    // ── Preferences ──
+                    _SectionHeader(title: 'Preferences'),
+                    _SettingsGroup(
+                      children: [
+                        Obx(() {
+                          final mode = themeController.themeMode.value;
+                          final label = switch (mode) {
+                            ThemeMode.system => 'Auto',
+                            ThemeMode.light => 'Light',
+                            ThemeMode.dark => 'Dark',
+                          };
+                          return _SettingsRow(
+                            icon: FeatherIcons.sun,
+                            title: 'Theme',
+                            value: label,
+                            onTap: () => _showThemePicker(
+                              context,
+                              themeController,
+                              controller,
+                            ),
+                          );
+                        }),
+                        if (isLoggedIn)
+                          Obx(() {
+                            final syncService = Get.find<SyncService>();
+                            return _SettingsToggleRow(
+                              icon: FeatherIcons.uploadCloud,
+                              title: 'Cloud Sync',
+                              value: syncService.isSyncEnabled.value,
+                              onChanged: (v) {
+                                syncService.setSyncEnabled(v);
+                                if (v) syncService.syncToCloud();
+                              },
+                            );
+                          }),
+                      ],
+                    ),
+
+                    const SizedBox(height: 28),
+
+                    // ── Data ──
+                    _SectionHeader(title: 'Data'),
+                    _SettingsGroup(
+                      children: [
+                        _SettingsRow(
+                          icon: FeatherIcons.download,
+                          title: 'Export Data',
+                          onTap: () async {
+                            final dir = await controller.pickExportDirectory();
+                            if (dir != null) {
+                              await controller.exportAll(dir);
+                            }
+                          },
                         ),
-                        SizedBox(
-                          width: double.infinity,
-                          child: FilledButton.icon(
-                            onPressed: () => AuthScreen.show(context),
-                            icon: const Icon(FeatherIcons.logIn, size: 14),
-                            label: const Text('Sign In or Create Account'),
-                          ),
+                        _SettingsRow(
+                          icon: FeatherIcons.trash2,
+                          title: 'Clear All Data',
+                          isDestructive: true,
+                          onTap: () => _showClearDialog(context, controller),
                         ),
                       ],
-                    );
-                  }),
-                ),
-                const SizedBox(height: 24),
-                _SettingItem(
-                  title: 'Data Management',
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: () async {
-                                final dir = await controller
-                                    .pickExportDirectory();
-                                if (dir != null) {
-                                  await controller.exportAll(dir);
-                                }
-                              },
-                              icon: const Icon(Icons.download),
-                              label: const Text('Export All Notes'),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: FilledButton.icon(
-                              onPressed: () =>
-                                  _showClearDialog(context, controller),
-                              style: FilledButton.styleFrom(
-                                backgroundColor: theme.colorScheme.error,
-                                foregroundColor: theme.colorScheme.onError,
-                              ),
-                              icon: const Icon(Icons.delete_outline),
-                              label: const Text('Clear All Data'),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-                _SettingItem(
-                  title: 'Legal',
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () => launchUrl(
+                    ),
+
+                    const SizedBox(height: 28),
+
+                    // ── About ──
+                    _SectionHeader(title: 'About'),
+                    _SettingsGroup(
+                      children: [
+                        _SettingsRow(
+                          icon: FeatherIcons.shield,
+                          title: 'Privacy Policy',
+                          onTap: () => launchUrl(
                             Uri.parse('https://fikr.bigmints.com/privacy'),
                             mode: LaunchMode.externalApplication,
                           ),
-                          icon: const Icon(Icons.privacy_tip_outlined),
-                          label: const Text('Privacy Policy'),
                         ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () => launchUrl(
+                        _SettingsRow(
+                          icon: FeatherIcons.fileText,
+                          title: 'Terms of Use',
+                          onTap: () => launchUrl(
                             Uri.parse('https://fikr.bigmints.com/terms'),
                             mode: LaunchMode.externalApplication,
                           ),
-                          icon: const Icon(Icons.description_outlined),
-                          label: const Text('Terms of Use'),
+                        ),
+                        if (isLoggedIn)
+                          _SettingsRow(
+                            icon: FeatherIcons.userMinus,
+                            title: 'Delete Account',
+                            isDestructive: true,
+                            onTap: () => _showDeleteAccountDialog(context),
+                          ),
+                      ],
+                    ),
+
+                    // ── Logout button at the bottom ──
+                    if (isLoggedIn) ...[
+                      const SizedBox(height: 36),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () async {
+                            await FirebaseService().signOut();
+                            if (context.mounted) {
+                              ToastService.showSuccess(
+                                context,
+                                title: 'Signed Out',
+                                description: 'Cloud sync disabled.',
+                              );
+                            }
+                          },
+                          icon: const Icon(FeatherIcons.logOut, size: 16),
+                          label: const Text('Logout'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: theme.colorScheme.error,
+                            side: BorderSide(
+                              color: theme.colorScheme.error.withValues(
+                                alpha: 0.3,
+                              ),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
                         ),
                       ),
                     ],
-                  ),
+
+                    const SizedBox(height: 48),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      }),
+    );
+  }
+
+  // ── Theme picker dialog (desktop) ──
+  void _showThemePicker(
+    BuildContext context,
+    ThemeController themeController,
+    AppController controller,
+  ) {
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: const Text('Theme'),
+          contentPadding: const EdgeInsets.only(top: 12, bottom: 8),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final entry in {
+                ThemeMode.system: ('Auto', FeatherIcons.monitor),
+                ThemeMode.light: ('Light', FeatherIcons.sun),
+                ThemeMode.dark: ('Dark', FeatherIcons.moon),
+              }.entries)
+                Obx(() {
+                  final isSelected =
+                      themeController.themeMode.value == entry.key;
+                  return ListTile(
+                    leading: Icon(entry.value.$2, size: 20),
+                    title: Text(entry.value.$1),
+                    trailing: isSelected
+                        ? Icon(
+                            Icons.check_circle,
+                            color: Theme.of(ctx).colorScheme.primary,
+                          )
+                        : null,
+                    onTap: () {
+                      themeController.setThemeMode(entry.key);
+                      controller.updateConfig(
+                        controller.config.value.copyWith(
+                          themeMode: entry.key.name,
+                        ),
+                      );
+                      Navigator.pop(ctx);
+                    },
+                  );
+                }),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -336,24 +506,143 @@ class DesktopSettings extends StatelessWidget {
   }
 }
 
-class _SettingItem extends StatelessWidget {
-  const _SettingItem({required this.title, required this.child});
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({required this.title});
   final String title;
-  final Widget child;
+
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(title, style: Theme.of(context).textTheme.titleSmall),
-          ],
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Padding(
+        padding: const EdgeInsets.only(left: 4, bottom: 8),
+        child: Text(
+          title,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.45),
+            fontWeight: FontWeight.w500,
+          ),
         ),
-        const SizedBox(height: 16),
-        child,
-      ],
+      ),
+    );
+  }
+}
+
+class _SettingsGroup extends StatelessWidget {
+  const _SettingsGroup({required this.children});
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final dividerColor = isDark
+        ? AppPalette.outlineDark
+        : AppPalette.outlineLight;
+
+    final items = <Widget>[];
+    for (int i = 0; i < children.length; i++) {
+      items.add(children[i]);
+      if (i < children.length - 1) {
+        items.add(Divider(height: 1, indent: 52, color: dividerColor));
+      }
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? AppPalette.surfaceDark : Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: dividerColor),
+      ),
+      child: Column(children: items),
+    );
+  }
+}
+
+class _SettingsRow extends StatelessWidget {
+  const _SettingsRow({
+    required this.icon,
+    required this.title,
+    this.value,
+    this.onTap,
+    this.isDestructive = false,
+  });
+  final IconData icon;
+  final String title;
+  final String? value;
+  final VoidCallback? onTap;
+  final bool isDestructive;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = isDestructive
+        ? theme.colorScheme.error
+        : theme.colorScheme.onSurface;
+
+    return ListTile(
+      leading: Icon(icon, size: 20, color: color.withValues(alpha: 0.7)),
+      title: Text(
+        title,
+        style: theme.textTheme.bodyMedium?.copyWith(color: color),
+      ),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (value != null)
+            Padding(
+              padding: const EdgeInsets.only(right: 4),
+              child: Text(
+                value!,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                ),
+              ),
+            ),
+          Icon(
+            FeatherIcons.chevronRight,
+            size: 16,
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+          ),
+        ],
+      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      onTap: onTap,
+    );
+  }
+}
+
+class _SettingsToggleRow extends StatelessWidget {
+  const _SettingsToggleRow({
+    required this.icon,
+    required this.title,
+    required this.value,
+    required this.onChanged,
+  });
+  final IconData icon;
+  final String title;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return ListTile(
+      leading: Icon(
+        icon,
+        size: 20,
+        color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+      ),
+      title: Text(title, style: theme.textTheme.bodyMedium),
+      trailing: Switch.adaptive(
+        value: value,
+        onChanged: onChanged,
+        activeTrackColor: theme.colorScheme.primary,
+      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
     );
   }
 }

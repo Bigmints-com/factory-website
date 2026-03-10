@@ -16,6 +16,8 @@ class SubscriptionController extends GetxController {
   final Rx<SubscriptionTier> currentTier = SubscriptionTier.free.obs;
 
   // Entitlements
+  bool get isFree => currentTier.value == SubscriptionTier.free;
+
   bool get canSync =>
       currentTier.value == SubscriptionTier.plus ||
       currentTier.value == SubscriptionTier.pro ||
@@ -63,9 +65,16 @@ class SubscriptionController extends GetxController {
     if (_listeningToUid == uid) return; // already listening to this user
     _tierSub?.cancel();
     _listeningToUid = uid;
-    _tierSub = _firebase.userTierStream(uid).listen(
-      (tier) => currentTier.value = tier,
-      onError: (e) => debugPrint('Tier stream error: $e'),
-    );
+    _tierSub = _firebase
+        .userTierStream(uid)
+        .listen(
+          (tier) => currentTier.value = tier,
+          onError: (e) => debugPrint('Tier stream error: $e'),
+        );
+  }
+
+  /// Called by [PurchaseService] after a successful purchase.
+  void setTier(SubscriptionTier tier) {
+    currentTier.value = tier;
   }
 }

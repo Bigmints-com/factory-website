@@ -111,8 +111,10 @@ class FirebaseService {
     try {
       final googleSignIn = GoogleSignIn.instance;
       await googleSignIn.initialize(
+        // iOS / macOS client ID – must match the URL scheme in Info.plist
         clientId:
-            '69536493117-o73gr11kiur6up4emvfgfhrufkr69ml5.apps.googleusercontent.com',
+            '69536493117-ikuuen4q38fq8f8rb4mn5ngeqk0birp4.apps.googleusercontent.com',
+        // Web client ID – used for server-side token validation by Firebase
         serverClientId:
             '69536493117-o73gr11kiur6up4emvfgfhrufkr69ml5.apps.googleusercontent.com',
       );
@@ -336,6 +338,19 @@ class FirebaseService {
             orElse: () => SubscriptionTier.free,
           );
         });
+  }
+
+  /// Write the subscription [tier] for [uid] to Firestore.
+  Future<void> updateUserTier(String uid, SubscriptionTier tier) async {
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(uid).set({
+        'plan': tier.name,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+      debugPrint('FirebaseService: Updated tier to ${tier.name} for $uid');
+    } catch (e) {
+      debugPrint('FirebaseService: Error updating tier: $e');
+    }
   }
 
   /// Analyze transcript using Gemini Flash

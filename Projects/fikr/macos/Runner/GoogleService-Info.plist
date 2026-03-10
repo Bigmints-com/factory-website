@@ -2,14 +2,18 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CLIENT_ID</key>
+	<string>69536493117-ikuuen4q38fq8f8rb4mn5ngeqk0birp4.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.69536493117-ikuuen4q38fq8f8rb4mn5ngeqk0birp4</string>
 	<key>API_KEY</key>
-	<string>AIzaSyCnAddSxl7V3T6X3jeh6AGvf4zYGm_VJnU</string>
+	<string>AIzaSyBSv_Z_PaXOk0HpTrM_PxoqFkK0SPQXIFw</string>
 	<key>GCM_SENDER_ID</key>
 	<string>69536493117</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.fikr.fikr</string>
+	<string>com.bigmints.fikr</string>
 	<key>PROJECT_ID</key>
 	<string>fikr-apps</string>
 	<key>STORAGE_BUCKET</key>
@@ -25,6 +29,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:69536493117:ios:7606a7260da1c636918454</string>
+	<string>1:69536493117:web:545d15b5c440fbb9918454</string>
 </dict>
 </plist>

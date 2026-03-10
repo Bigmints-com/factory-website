@@ -115,27 +115,7 @@ class _TopIdeasSectionState extends State<TopIdeasSection> {
                 width: 280,
                 child: Container(
                   margin: const EdgeInsets.only(left: 16),
-                  decoration: BoxDecoration(
-                    color: isDark ? AppPalette.surfaceDark : Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: isDark
-                        ? null
-                        : const [
-                            BoxShadow(
-                              color: Color(0x0F000000),
-                              blurRadius: 3,
-                              offset: Offset(0, 1),
-                            ),
-                            BoxShadow(
-                              color: Color(0x0D000000),
-                              blurRadius: 16,
-                              offset: Offset(0, 4),
-                            ),
-                          ],
-                    border: isDark
-                        ? Border.all(color: AppPalette.outlineDark, width: 1)
-                        : null,
-                  ),
+                  decoration: AppPalette.cardDecoration(context),
                   child: Material(
                     color: Colors.transparent,
                     child: InkWell(
@@ -199,24 +179,19 @@ class HighlightTile extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: isDark ? AppPalette.surfaceDark : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border(left: BorderSide(color: color, width: 4)),
-        boxShadow: isDark
-            ? null
-            : const [
-                BoxShadow(
-                  color: Color(0x0F000000),
-                  blurRadius: 3,
-                  offset: Offset(0, 1),
-                ),
-                BoxShadow(
-                  color: Color(0x0D000000),
-                  blurRadius: 16,
-                  offset: Offset(0, 4),
-                ),
-              ],
+      decoration: AppPalette.cardDecoration(context).copyWith(
+        border: Border(
+          left: BorderSide(color: color, width: 4),
+          top: BorderSide(
+            color: isDark ? AppPalette.outlineDark : AppPalette.outlineLight,
+          ),
+          right: BorderSide(
+            color: isDark ? AppPalette.outlineDark : AppPalette.outlineLight,
+          ),
+          bottom: BorderSide(
+            color: isDark ? AppPalette.outlineDark : AppPalette.outlineLight,
+          ),
+        ),
       ),
       child: Material(
         color: Colors.transparent,
