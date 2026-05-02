@@ -1,0 +1,459 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        
+        {
+            "name": "Flutter (Dev)",
+            "type": "dart",
+            "request": "launch",
+            "program": "lib/main_dev.dart",
+            "args": ["--flavor", "dev"]
+        },
+        {
+            "name": "Flutter (Prod)",
+            "type": "dart",
+            "request": "launch",
+            "program": "lib/main_prod.dart",
+            "args": ["--flavor", "prod"]
+        },
+        {
+            "name": "career (Dev)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main_dev.dart",
+            "args": ["--flavor", "dev"]
+        },
+        {
+            "name": "career (Prod)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main_prod.dart",
+            "args": ["--flavor", "prod"]
+        },
+        {
+            "name": "career (profile mode - Dev)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile",
+            "program": "lib/main_dev.dart",
+            "args": ["--flavor", "dev"]
+        },
+        {
+            "name": "career (profile mode - Prod)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile",
+            "program": "lib/main_prod.dart",
+            "args": ["--flavor", "prod"]
+        },
+        {
+            "name": "career (release mode - Dev)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release",
+            "program": "lib/main_dev.dart",
+            "args": ["--flavor", "dev"]
+        },
+        {
+            "name": "career (release mode - Prod)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release",
+            "program": "lib/main_prod.dart",
+            "args": ["--flavor", "prod"]
+        },
+        {
+            "name": "Launch All Devices (Dev)",
+            "type": "dart",
+            "request": "launch",
+            "program": "lib/main_dev.dart",
+            "preLaunchTask": "Launch Simulators",
+            "args": ["--flavor", "dev"]
+        },
+        {
+            "name": "Launch All Devices (Prod)",
+            "type": "dart",
+            "request": "launch",
+            "program": "lib/main_prod.dart",
+            "preLaunchTask": "Launch Simulators",
+            "args": ["--flavor", "prod"]
+        },
+        {
+            "name": "IPad Simulator (Dev)",
+            "type": "dart",
+            "request": "launch",
+            "program": "career/lib/main_dev.dart",
+            "deviceId": "AC268F78-71BC-4BCC-B731-825EB792D137",
+            "preLaunchTask": "Copy iOS Dev Config"
+        },
+        {
+            "name": "iOS Simulator (Dev)",
+            "type": "dart",
+            "request": "launch",
+            "program": "career/lib/main_dev.dart",
+            "deviceId": "B8C83222-CC1D-47FA-A06E-E5A0D3461CBD",
+            "preLaunchTask": "Copy iOS Dev Config"
+        },
+        {
+            "name": "iOS Simulator (Prod)",
+            "type": "dart",
+            "request": "launch",
+            "program": "career/lib/main_prod.dart",
+            "deviceId": "B8C83222-CC1D-47FA-A06E-E5A0D3461CBD",
+            "preLaunchTask": "Copy iOS Prod Config"
+        },
+        {
+            "name": "Android Emulator (Dev)",
+            "type": "dart",
+            "request": "launch",
+            "program": "career/lib/main_dev.dart",
+            "deviceId": "emulator-5554",
+            "args": ["--flavor", "dev"]
+        },
+        {
+            "name": "Android Emulator (Prod)",
+            "type": "dart",
+            "request": "launch",
+            "program": "career/lib/main_prod.dart",
+            "deviceId": "emulator-5554",
+            "args": ["--flavor", "prod", "--release"]
+        },
+        {
+            "name": "Chrome Web (Dev)",
+            "type": "dart",
+            "request": "launch",
+            "program": "career/lib/main_dev.dart",
+            "deviceId": "chrome"
+        },
+        {
+            "name": "Chrome Web (Prod)",
+            "type": "dart",
+            "request": "launch",
+            "program": "career/lib/main_prod.dart",
+            "deviceId": "chrome",
+            "args": ["--flavor", "prod", "--release"]
+        },
+        {
+            "name": "Physical iOS Device (Dev)",
+            "type": "dart",
+            "request": "launch",
+            "program": "lib/main_dev.dart",
+            "deviceId": "00008110-001518CC260A801E",
+            "preLaunchTask": "Copy iOS Dev Config"
+        },
+        {
+            "name": "Physical iOS Device (Prod)",
+            "type": "dart",
+            "request": "launch",
+            "program": "lib/main_prod.dart",
+            "deviceId": "00008110-001518CC260A801E",
+            "preLaunchTask": "Copy iOS Prod Config"
+        },
+        {
+            "name": "Physical Android Device (Dev)",
+            "type": "dart",
+            "request": "launch",
+            "program": "career/lib/main_dev.dart",
+            "deviceId": "a1289ecc",
+            "args": ["--flavor", "dev"]
+        },
+        {
+            "name": "Physical Android Device (Prod)",
+            "type": "dart",
+            "request": "launch",
+            "program": "lib/main_prod.dart",
+            "deviceId": "emulator-5554",
+            "args": ["--flavor", "prod"]
+        },
+        {
+            "name": "macOS Desktop (Dev)",
+            "type": "dart",
+            "request": "launch",
+            "program": "lib/main_dev.dart",
+            "deviceId": "macos",
+            "args": ["--flavor", "dev"]
+        },
+        {
+            "name": "macOS Desktop (Prod)",
+            "type": "dart",
+            "request": "launch",
+            "program": "lib/main_prod.dart",
+            "deviceId": "macos",
+            "args": ["--flavor", "prod"]
+        },
+        {
+            "name": "Mac Designed for iPad (Dev)",
+            "type": "dart",
+            "request": "launch",
+            "program": "lib/main_dev.dart",
+            "deviceId": "mac-designed-for-ipad",
+            "args": ["--flavor", "dev"]
+        },
+        {
+            "name": "Mac Designed for iPad (Prod)",
+            "type": "dart",
+            "request": "launch",
+            "program": "lib/main_prod.dart",
+            "deviceId": "mac-designed-for-ipad",
+            "args": ["--flavor", "prod"]
+        },
+        {
+            "name": "Hot Reload (Dev)",
+            "type": "dart",
+            "request": "launch",
+            "program": "lib/main_dev.dart",
+            "args": ["--flavor", "dev", "--hot"],
+            "hotReload": true
+        },
+        {
+            "name": "Hot Reload (Prod)",
+            "type": "dart",
+            "request": "launch",
+            "program": "lib/main_prod.dart",
+            "args": ["--flavor", "prod", "--hot"],
+            "hotReload": true
+        },
+        {
+            "name": "Performance Profile (Dev)",
+            "type": "dart",
+            "request": "launch",
+            "program": "lib/main_dev.dart",
+            "flutterMode": "profile",
+            "args": ["--flavor", "dev", "--profile"],
+            "preLaunchTask": "Clean Build"
+        },
+        {
+            "name": "Performance Profile (Prod)",
+            "type": "dart",
+            "request": "launch",
+            "program": "lib/main_prod.dart",
+            "flutterMode": "profile",
+            "args": ["--flavor", "prod", "--profile"],
+            "preLaunchTask": "Clean Build"
+        },
+        {
+            "name": "Debug with Observatory (Dev)",
+            "type": "dart",
+            "request": "launch",
+            "program": "lib/main_dev.dart",
+            "args": ["--flavor", "dev", "--observatory-port=8888"],
+            "vmServicePort": 8888
+        },
+        {
+            "name": "Debug with Observatory (Prod)",
+            "type": "dart",
+            "request": "launch",
+            "program": "lib/main_prod.dart",
+            "args": ["--flavor", "prod", "--observatory-port=8888"],
+            "vmServicePort": 8888
+        },
+        {
+            "name": "Widget Tests",
+            "type": "dart",
+            "request": "launch",
+            "program": "test/widget_test.dart",
+            "args": ["--flavor", "dev"]
+        },
+        {
+            "name": "Integration Tests",
+            "type": "dart",
+            "request": "launch",
+            "program": "integration_test/app_test.dart",
+            "args": ["--flavor", "dev"]
+        },
+        {
+            "name": "Unit Tests",
+            "type": "dart",
+            "request": "launch",
+            "program": "test/",
+            "args": ["--flavor", "dev"]
+        },
+        {
+            "name": "Build APK (Dev)",
+            "type": "dart",
+            "request": "launch",
+            "program": "lib/main_dev.dart",
+            "args": ["--flavor", "dev", "--build-apk"],
+            "preLaunchTask": "Build APK Dev"
+        },
+        {
+            "name": "Build APK (Prod)",
+            "type": "dart",
+            "request": "launch",
+            "program": "lib/main_prod.dart",
+            "args": ["--flavor", "prod", "--build-apk"],
+            "preLaunchTask": "Build APK Prod"
+        },
+        {
+            "name": "Build iOS (Dev)",
+            "type": "dart",
+            "request": "launch",
+            "program": "lib/main_dev.dart",
+            "args": ["--flavor", "dev", "--build-ios"],
+            "preLaunchTask": "Build iOS Dev"
+        },
+        {
+            "name": "Build iOS (Prod)",
+            "type": "dart",
+            "request": "launch",
+            "program": "lib/main_prod.dart",
+            "args": ["--flavor", "prod", "--build-ios"],
+            "preLaunchTask": "Build iOS Prod"
+        },
+        {
+            "name": "Build Web (Dev)",
+            "type": "dart",
+            "request": "launch",
+            "program": "lib/main_dev.dart",
+            "args": ["--flavor", "dev", "--build-web"],
+            "preLaunchTask": "Build Web Dev"
+        },
+        {
+            "name": "Build Web (Prod)",
+            "type": "dart",
+            "request": "launch",
+            "program": "lib/main_prod.dart",
+            "args": ["--flavor", "prod", "--build-web"],
+            "preLaunchTask": "Build Web Prod"
+        },
+        {
+            "name": "Auto Device Detection (Dev)",
+            "type": "dart",
+            "request": "launch",
+            "program": "lib/main_dev.dart",
+            "args": ["--flavor", "dev"],
+            "autoDetectDevice": true
+        },
+        {
+            "name": "Auto Device Detection (Prod)",
+            "type": "dart",
+            "request": "launch",
+            "program": "lib/main_prod.dart",
+            "args": ["--flavor", "prod"],
+            "autoDetectDevice": true
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Debug iOS + Android (Dev)",
+            "configurations": [
+                "iOS Simulator (Dev)",
+                "Android Emulator (Dev)"
+            ],
+            "stopAll": true
+        },
+        {
+            "name": "Debug iOS + Android (Prod)",
+            "configurations": [
+                "iOS Simulator (Prod)",
+                "Android Emulator (Prod)"
+            ],
+            "stopAll": true
+        },
+        {
+            "name": "Debug iOS + Web (Dev)",
+            "configurations": [
+                "iOS Simulator (Dev)",
+                "Chrome Web (Dev)"
+            ],
+            "stopAll": true
+        },
+        {
+            "name": "Debug iOS + Web (Prod)",
+            "configurations": [
+                "iOS Simulator (Prod)",
+                "Chrome Web (Prod)"
+            ],
+            "stopAll": true
+        },
+        {
+            "name": "Debug Android + Web (Dev)",
+            "configurations": [
+                "Android Emulator (Dev)",
+                "Chrome Web (Dev)"
+            ],
+            "stopAll": true
+        },
+        {
+            "name": "Debug Android + Web (Prod)",
+            "configurations": [
+                "Android Emulator (Prod)",
+                "Chrome Web (Prod)"
+            ],
+            "stopAll": true
+        },
+        {
+            "name": "Debug All Platforms (Dev)",
+            "configurations": [
+                "iOS Simulator (Dev)",
+                "Android Emulator (Dev)",
+                "Chrome Web (Dev)"
+            ],
+            "stopAll": true
+        },
+        {
+            "name": "Debug All Platforms (Prod)",
+            "configurations": [
+                "iOS Simulator (Prod)",
+                "Android Emulator (Prod)",
+                "Chrome Web (Prod)"
+            ],
+            "stopAll": true
+        },
+        {
+            "name": "Debug Physical Devices (Dev)",
+            "configurations": [
+                "Physical iOS Device (Dev)",
+                "Physical Android Device (Dev)"
+            ],
+            "stopAll": true
+        },
+        {
+            "name": "Debug Physical Devices (Prod)",
+            "configurations": [
+                "Physical iOS Device (Prod)",
+                "Physical Android Device (Prod)"
+            ],
+            "stopAll": true
+        },
+        {
+            "name": "Performance Testing (Dev)",
+            "configurations": [
+                "Performance Profile (Dev)",
+                "Hot Reload (Dev)"
+            ],
+            "stopAll": true
+        },
+        {
+            "name": "Performance Testing (Prod)",
+            "configurations": [
+                "Performance Profile (Prod)",
+                "Hot Reload (Prod)"
+            ],
+            "stopAll": true
+        },
+        {
+            "name": "Cross-Platform Testing (Dev)",
+            "configurations": [
+                "iOS Simulator (Dev)",
+                "Android Emulator (Dev)",
+                "Chrome Web (Dev)",
+                "macOS Desktop (Dev)"
+            ],
+            "stopAll": true
+        },
+        {
+            "name": "Cross-Platform Testing (Prod)",
+            "configurations": [
+                "iOS Simulator (Prod)",
+                "Android Emulator (Prod)",
+                "Chrome Web (Prod)",
+                "macOS Desktop (Prod)"
+            ],
+            "stopAll": true
+        }
+    ]
+}

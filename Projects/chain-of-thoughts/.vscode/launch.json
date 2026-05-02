@@ -1,0 +1,67 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Flutter (macOS)",
+            "type": "dart",
+            "request": "launch",
+            "program": "lib/main.dart",
+            "args": [
+                "-d",
+                "macos"
+            ]
+        },
+        {
+            "name": "Flutter (iOS Simulator)",
+            "type": "dart",
+            "request": "launch",
+            "program": "lib/main.dart",
+            "args": [
+                "-d",
+                "ios"
+            ]
+        },
+        {
+            "name": "Flutter (Android Emulator)",
+            "type": "dart",
+            "request": "launch",
+            "program": "lib/main.dart",
+            "args": [
+                "-d",
+                "android"
+            ]
+        },
+        {
+            "name": "Flutter (AC2001 - Android 16)",
+            "type": "dart",
+            "request": "launch",
+            "program": "lib/main.dart",
+            "args": [
+                "-d",
+                "a1289ecc"
+            ]
+        },
+        {
+            "name": "Flutter (Profile - macOS)",
+            "type": "dart",
+            "request": "launch",
+            "program": "lib/main.dart",
+            "flutterMode": "profile",
+            "args": [
+                "-d",
+                "macos"
+            ]
+        },
+        {
+            "name": "Flutter (Release - macOS)",
+            "type": "dart",
+            "request": "launch",
+            "program": "lib/main.dart",
+            "flutterMode": "release",
+            "args": [
+                "-d",
+                "macos"
+            ]
+        }
+    ]
+}
